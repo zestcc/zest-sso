@@ -32,6 +32,8 @@ export interface UserInfo {
 export interface LoginResult {
   mfaRequired: boolean
   mfaToken?: string
+  mfaMode?: string
+  mfaHint?: string
   user?: UserInfo
 }
 
@@ -79,6 +81,7 @@ export interface IdentityProviderInfo {
   alias: string
   displayName: string
   providerType?: string
+  adapterKey?: string
   discoveryUri?: string
   clientId?: string
   scopes?: string
@@ -131,10 +134,12 @@ export interface CreateIdentityProviderPayload {
   alias: string
   displayName: string
   providerType?: 'OIDC' | 'SAML'
+  adapterKey?: string
   discoveryUri?: string
   clientId?: string
   clientSecret?: string
   scopes?: string
+  endpointConfig?: FederatedEndpointConfig
   usernameClaim?: string
   emailClaim?: string
   displayNameClaim?: string
@@ -148,6 +153,7 @@ export interface CreateIdentityProviderPayload {
 
 export interface UpdateIdentityProviderPayload {
   displayName?: string
+  adapterKey?: string
   discoveryUri?: string
   clientId?: string
   clientSecret?: string
@@ -199,6 +205,7 @@ export interface ClientInfo {
 
 export interface CreateClientResult extends ClientInfo {
   clientSecret?: string
+  onboarding?: ClientOnboardingInfo
 }
 
 export interface AuditLog {
@@ -337,4 +344,69 @@ export interface CreateLdapProviderPayload {
 
 export interface UpdateLdapProviderPayload extends Partial<CreateLdapProviderPayload> {
   enabled?: number
+}
+
+export interface FederatedEndpointConfig {
+  authorizationUri?: string
+  tokenUri?: string
+  userInfoUri?: string
+  jwkSetUri?: string
+  authorizationQueryParams?: string
+}
+
+export interface FederatedIdpAdapterInfo {
+  key: string
+  displayName: string
+  description: string
+  discoverySupported: boolean
+  manualEndpointsSupported: boolean
+  productionReady: boolean
+  defaultClaims: Record<string, string>
+  defaultEndpoints: Record<string, string>
+}
+
+export interface OptionalModuleInfo {
+  key: string
+  name: string
+  description: string
+  category: string
+  enabled: boolean
+  configurable: boolean
+  configHints: Record<string, string>
+}
+
+export interface MfaChannelInfo {
+  key: string
+  name: string
+  description: string
+  enabled: boolean
+  productionReady: boolean
+  configHints: Record<string, string>
+}
+
+export interface AlertChannelInfo {
+  key: string
+  name: string
+  description: string
+  enabled: boolean
+  configHints: Record<string, string>
+}
+
+export interface WebhookDeliveryInfo {
+  id: number
+  eventType: string
+  endpointUrl: string
+  status: string
+  attemptCount: number
+  lastError?: string
+  createTime: string
+}
+
+export interface ClientOnboardingInfo {
+  stack: string
+  issuer: string
+  recommendedScopes: string[]
+  recommendedGrants: string[]
+  redirectUri: string
+  snippets: Record<string, string>
 }

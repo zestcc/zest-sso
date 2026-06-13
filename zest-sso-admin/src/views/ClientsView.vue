@@ -14,6 +14,11 @@ const modalOpen = ref(false)
 const editing = ref<ClientInfo | null>(null)
 const secretModalOpen = ref(false)
 const revealedSecret = ref('')
+const wizardOpen = ref(false)
+const wizardAppName = ref('')
+const wizardRedirect = ref('http://localhost:8080/login/oauth2/code/zest-sso')
+const wizardStack = ref('spring-boot')
+const wizardGuide = ref<import('@/types').ClientOnboardingInfo | null>(null)
 
 const defaultScopes = ['openid', 'profile', 'email', 'roles', 'tenant', 'scim']
 const defaultGrants = ['authorization_code', 'refresh_token']
@@ -124,6 +129,30 @@ async function handleSubmit() {
   }
 }
 
+function openWizard() {
+  wizardAppName.value = ''
+  wizardGuide.value = null
+  wizardOpen.value = true
+}
+
+async function previewWizard() {
+  wizardGuide.value = await clientApi.onboardingTemplate(wizardStack.value, wizardRedirect.value)
+}
+
+async function runQuickCreate() {
+  if (!wizardAppName.value.trim()) {
+    message.warning('请输入应用名称')
+    return
+  }
+  const result = await clientApi.quickCreate(wizardAppName.value.trim(), wizardRedirect.value)
+  revealedSecret.value = result.clientSecret || ''
+  wizardGuide.value = result.onboarding || null
+  secretModalOpen.value = true
+  wizardOpen.value = false
+  message.success('应用已通过向导创建')
+  await loadClients()
+}
+
 async function toggleStatus(record: ClientInfo) {
   try {
     if (record.status === 1) {
@@ -173,7 +202,10 @@ onMounted(loadClients)
   <div class="page-card">
     <div class="page-toolbar">
       <a-typography-title :level="4" style="margin: 0">OAuth 应用接入</a-typography-title>
-      <a-button type="primary" @click="openCreate">注册应用</a-button>
+      <a-space>
+        <a-button @click="openWizard">接入向导</a-button>
+        <a-button type="primary" @click="openCreate">注册应用</a-button>
+      </a-space>
     </div>
 
     <a-table
@@ -303,5 +335,32 @@ onMounted(loadClients)
       style="margin-bottom: 16px"
     />
     <a-typography-paragraph copyable :content="revealedSecret" />
+  </a-modal>
+
+  <a-modal v-model:open="wizardOpen" title="应用接入向导" width="720px" @ok="runQuickCreate">
+    <a-form layout="vertical">
+      <a-form-item label="应用名称" required>
+        <a-input v-model:value="wizardAppName" placeholder="ZestFlow Admin" />
+      </a-form-item>
+      <a-form-item label="技术栈">
+        <a-select v-model:value="wizardStack" @change="previewWizard">
+          <a-select-option value="spring-boot">Spring Boot</a-select-option>
+          <a-select-option value="vue">Vue / SPA</a-select-option>
+          <a-select-option value="node">Node.js</a-select-option>
+        </a-select>
+      </a-form-item>
+      <a-form-item label="回调地址">
+        <a-input v-model:value="wizardRedirect" @blur="previewWizard" />
+      </a-form-item>
+      <a-button type="link" @click="previewWizard">预览集成片段</a-button>
+      <template v-if="wizardGuide">
+        <a-divider>OIDC 端点</a-divider>
+        <a-descriptions bordered size="small" :column="1">
+          <a-descriptions-item v-for="(v, k) in wizardGuide.snippets" :key="k" :label="k">
+            <a-typography-text code copyable>{{ v }}</a-typography-text>
+          </a-descriptions-item>
+        </a-descriptions>
+      </template>
+    </a-form>
   </a-modal>
 </template>

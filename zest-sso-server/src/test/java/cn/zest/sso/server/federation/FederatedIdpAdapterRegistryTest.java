@@ -1,5 +1,6 @@
 package cn.zest.sso.server.federation;
 
+import cn.zest.sso.server.config.SsoProperties;
 import cn.zest.sso.server.domain.entity.SsoIdentityProvider;
 import cn.zest.sso.server.federation.adapter.DingtalkFederatedIdpAdapter;
 import cn.zest.sso.server.federation.adapter.FeishuFederatedIdpAdapter;
@@ -22,11 +23,12 @@ class FederatedIdpAdapterRegistryTest {
     @BeforeEach
     void setUp() {
         OAuth2ClientRegistrationSupport support = new OAuth2ClientRegistrationSupport(new ObjectMapper());
+        SsoProperties properties = new SsoProperties();
         registry = new FederatedIdpAdapterRegistry(List.of(
                 new GenericOidcFederatedIdpAdapter(support),
                 new FeishuFederatedIdpAdapter(support),
                 new DingtalkFederatedIdpAdapter(support),
-                new WecomFederatedIdpAdapter(support)
+                new WecomFederatedIdpAdapter(support, properties)
         ));
     }
 

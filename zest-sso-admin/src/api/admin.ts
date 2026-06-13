@@ -167,6 +167,9 @@ export const identityProviderApi = {
       http.post('/api/admin/identity-providers/parse-saml-metadata', { metadataUri }),
     )
   },
+  listAdapters() {
+    return unwrap<import('@/types').FederatedIdpAdapterInfo[]>(http.get('/api/admin/identity-providers/adapters'))
+  },
 }
 
 export const clientApi = {
@@ -193,6 +196,16 @@ export const clientApi = {
   },
   remove(clientId: string) {
     return unwrap(http.delete(`/api/admin/clients/${clientId}`))
+  },
+  onboardingTemplate(stack = 'spring-boot', redirectUri?: string) {
+    return unwrap<import('@/types').ClientOnboardingInfo>(http.get('/api/admin/clients/onboarding/template', {
+      params: { stack, redirectUri },
+    }))
+  },
+  quickCreate(appName: string, redirectUri?: string) {
+    return unwrap<CreateClientResult>(http.post('/api/admin/clients/onboarding/quick-create', null, {
+      params: { appName, redirectUri },
+    }))
   },
 }
 
@@ -285,5 +298,31 @@ export const auditApi = {
     if (endTime) params.set('endTime', endTime)
     const qs = params.toString()
     return `/api/admin/audit-logs/export${qs ? `?${qs}` : ''}`
+  },
+}
+
+export const moduleApi = {
+  list() {
+    return unwrap<import('@/types').OptionalModuleInfo[]>(http.get('/api/admin/modules'))
+  },
+}
+
+export const channelApi = {
+  listMfa() {
+    return unwrap<import('@/types').MfaChannelInfo[]>(http.get('/api/admin/channels/mfa'))
+  },
+  listAlerts() {
+    return unwrap<import('@/types').AlertChannelInfo[]>(http.get('/api/admin/channels/alerts'))
+  },
+}
+
+export const webhookApi = {
+  list(page = 1, size = 20, status?: string, eventType?: string) {
+    return unwrap<PageResult<import('@/types').WebhookDeliveryInfo>>(http.get('/api/admin/webhook-deliveries', {
+      params: { page, size, status, eventType },
+    }))
+  },
+  retry(id: number) {
+    return unwrap(http.post(`/api/admin/webhook-deliveries/${id}/retry`))
   },
 }

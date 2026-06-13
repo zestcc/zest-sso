@@ -97,6 +97,9 @@ public class SsoProperties {
     private Mail mail = new Mail();
     private PasswordReset passwordReset = new PasswordReset();
     private WebAuthn webauthn = new WebAuthn();
+    private Modules modules = new Modules();
+    private Mfa mfa = new Mfa();
+    private Alerts alerts = new Alerts();
     private Audit audit = new Audit();
     private Backchannel backchannel = new Backchannel();
     private Webhooks webhooks = new Webhooks();
@@ -134,5 +137,81 @@ public class SsoProperties {
         private int accessTokenTtl = 3600;
         private int refreshTokenTtl = 86400;
         private int idTokenTtl = 3600;
+    }
+
+    @Data
+    public static class Modules {
+        private boolean federation = true;
+        private boolean scim = true;
+        private boolean webauthn = true;
+        private boolean webhooks = false;
+        private boolean alerts = false;
+        private boolean smsMfa = false;
+        private boolean wecomFederation = false;
+        private boolean clientOnboardingWizard = true;
+    }
+
+    @Data
+    public static class Mfa {
+        /** step-up 优先通道：sms,email（逗号分隔，仅已启用通道生效） */
+        private String stepUpPriority = "sms,email";
+        private Channels channels = new Channels();
+
+        @Data
+        public static class Channels {
+            private ChannelConfig totp = new ChannelConfig(true);
+            private ChannelConfig email = new ChannelConfig(true);
+            private AliyunSmsConfig aliyunSms = new AliyunSmsConfig();
+            private TencentSmsConfig tencentSms = new TencentSmsConfig();
+        }
+
+        @Data
+        public static class ChannelConfig {
+            private boolean enabled;
+
+            public ChannelConfig() {
+            }
+
+            public ChannelConfig(boolean enabled) {
+                this.enabled = enabled;
+            }
+        }
+
+        @Data
+        public static class AliyunSmsConfig {
+            private boolean enabled = false;
+            private String accessKeyId;
+            private String accessKeySecret;
+            private String signName;
+            private String templateCode;
+            private String regionId = "cn-hangzhou";
+        }
+
+        @Data
+        public static class TencentSmsConfig {
+            private boolean enabled = false;
+            private String secretId;
+            private String secretKey;
+            private String sdkAppId;
+            private String signName;
+            private String templateId;
+            private String region = "ap-guangzhou";
+        }
+    }
+
+    @Data
+    public static class Alerts {
+        private boolean enabled = false;
+        private java.util.List<ChannelBinding> channels = new java.util.ArrayList<>();
+
+        @Data
+        public static class ChannelBinding {
+            /** 通道键：http-webhook / dingtalk-bot / wecom-bot */
+            private String channelKey;
+            private boolean enabled = true;
+            /** 事件过滤，空=全部 */
+            private java.util.List<String> events = new java.util.ArrayList<>();
+            private java.util.Map<String, String> config = new java.util.LinkedHashMap<>();
+        }
     }
 }

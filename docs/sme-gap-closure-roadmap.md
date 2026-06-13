@@ -24,15 +24,17 @@
 - [x] Grafana 大盘 + Prometheus 告警规则
 - [x] 等保测评材料清单、渗透测试范围说明书
 
-### 阶段 B — 下一迭代（产品增强，约 2~4 周）
+### 阶段 B — 下一迭代（产品增强）
 
-- [ ] 企业微信 **自定义 TokenResponseClient**（`wecom` 适配器生产就绪）
-- [ ] Admin 控制台「应用接入向导」（OIDC 客户端一键生成 + 回调 URL 复制）
-- [ ] 钉钉 / 企微 **告警 Webhook** 预置（登录异常、Back-Channel 失败）
-- [ ] 短信 MFA（阿里云 / 腾讯云 SMS 适配器）
-- [ ] Helm Chart 增加 HPA、PodDisruptionBudget
+- [x] 企业微信 **WecomOAuth2TokenClient**（`wecom-federation` 模块开关）
+- [x] Admin **adapterKey** 下拉 + **应用接入向导**
+- [x] **MfaChannelAdapter** SPI（阿里云/腾讯云短信，可选）
+- [x] **AlertChannelAdapter** SPI（HTTP/钉钉/企微机器人，可选）
+- [x] Helm **HPA / PDB**（values 可选启用）
+- [ ] Admin 告警通道在线配置（当前 YAML）
+- [ ] 短信 SDK 真实发送（当前日志模拟，凭据就绪后可接 SDK）
 
-### 阶段 C — 合规闭环（需外部机构，约 4~8 周）
+### 阶段 C — 合规闭环（需外部机构）
 
 - [ ] 委托等保测评机构出具正式报告（二级/三级按甲方要求）
 - [ ] 委托渗透测试并归档整改记录

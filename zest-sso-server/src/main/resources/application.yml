@@ -132,6 +132,29 @@ zest:
       rp-id: localhost
       rp-name: ZestSSO
       origins: http://localhost:9000,http://localhost:5173,http://localhost:5174,http://localhost:5175
+    modules:
+      federation: true
+      scim: true
+      webauthn: true
+      webhooks: false
+      alerts: false
+      sms-mfa: false
+      wecom-federation: false
+      client-onboarding-wizard: true
+    mfa:
+      step-up-priority: sms,email
+      channels:
+        totp:
+          enabled: true
+        email:
+          enabled: true
+        aliyun-sms:
+          enabled: false
+        tencent-sms:
+          enabled: false
+    alerts:
+      enabled: false
+      channels: []
 
 springdoc:
   api-docs:

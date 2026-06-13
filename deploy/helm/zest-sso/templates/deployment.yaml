@@ -52,6 +52,22 @@ spec:
               value: {{ .Values.jwt.keyId | quote }}
             - name: ZEST_SSO_SECURITY_CORS_ALLOWED_ORIGINS
               value: {{ .Values.env.ZEST_SSO_SECURITY_CORS_ALLOWED_ORIGINS | quote }}
+            - name: ZEST_SSO_MODULES_FEDERATION
+              value: {{ .Values.modules.federation | quote }}
+            - name: ZEST_SSO_MODULES_SCIM
+              value: {{ .Values.modules.scim | quote }}
+            - name: ZEST_SSO_MODULES_WEBAUTHN
+              value: {{ .Values.modules.webauthn | quote }}
+            - name: ZEST_SSO_MODULES_WEBHOOKS
+              value: {{ .Values.modules.webhooks | quote }}
+            - name: ZEST_SSO_MODULES_ALERTS
+              value: {{ .Values.modules.alerts | quote }}
+            - name: ZEST_SSO_MODULES_SMS_MFA
+              value: {{ .Values.modules.smsMfa | quote }}
+            - name: ZEST_SSO_MODULES_WECOM_FEDERATION
+              value: {{ .Values.modules.wecomFederation | quote }}
+            - name: ZEST_SSO_MODULES_CLIENT_ONBOARDING_WIZARD
+              value: {{ .Values.modules.clientOnboardingWizard | quote }}
           volumeMounts:
             - name: jwt-keys
               mountPath: /secrets/jwt

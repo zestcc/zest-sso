@@ -8,6 +8,8 @@ import cn.zest.sso.server.domain.mapper.SsoUserMapper;
 import cn.zest.sso.server.domain.vo.LoginResultVO;
 import cn.zest.sso.server.domain.vo.MfaSetupVO;
 import cn.zest.sso.server.domain.vo.UserInfoVO;
+import cn.zest.sso.server.mfa.MfaStepUpChannelSelector;
+import cn.zest.sso.server.mfa.spi.MfaChannelAdapter;
 import cn.zest.sso.server.security.TotpUtil;
 import cn.zest.sso.server.support.AdminAuditSupport;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class MfaService {
     private final StringRedisTemplate redisTemplate;
     private final AdminAuditSupport auditSupport;
     private final LoginRiskService loginRiskService;
-    private final EmailService emailService;
+    private final MfaStepUpChannelSelector stepUpChannelSelector;
 
     public LoginResultVO buildLoginResult(Long userId) {
         return buildLoginResult(userId, null);
@@ -61,30 +62,28 @@ public class MfaService {
                     .build();
         }
         String mfaToken = UUID.randomUUID().toString().replace("-", "");
-        String mode = mfaEnabled ? MFA_MODE_TOTP : MFA_MODE_EMAIL;
+        String mode = stepUpChannelSelector.resolveBoundMode(user);
         redisTemplate.opsForValue().set(MFA_PENDING_PREFIX + mfaToken, String.valueOf(userId),
                 Duration.ofMinutes(5));
         redisTemplate.opsForValue().set(MFA_MODE_PREFIX + mfaToken, mode, Duration.ofMinutes(5));
-        if (MFA_MODE_EMAIL.equals(mode)) {
-            sendEmailOtp(user, mfaToken);
+        String hint = null;
+        if (!MfaStepUpChannelSelector.MODE_TOTP.equals(mode)) {
+            MfaChannelAdapter adapter = stepUpChannelSelector.resolveAdapter(mode);
+            hint = adapter.sendChallenge(user, mfaToken);
             loginRiskService.markStepUpPending(user.getUsername());
         }
         return LoginResultVO.builder()
                 .mfaRequired(true)
                 .mfaToken(mfaToken)
                 .mfaMode(mode)
+                .mfaHint(hint)
                 .build();
     }
 
     public UserInfoVO verifyLogin(String mfaToken, String code) {
         Long userId = consumePendingToken(mfaToken);
         SsoUser user = requireUser(userId);
-        String mode = redisTemplate.opsForValue().get(MFA_MODE_PREFIX + mfaToken);
-        if (MFA_MODE_EMAIL.equals(mode)) {
-            assertEmailCode(mfaToken, code);
-        } else {
-            assertMfaCode(user.getMfaSecret(), code);
-        }
+        verifyChallenge(mfaToken, user, code);
         redisTemplate.delete(MFA_PENDING_PREFIX + mfaToken);
         redisTemplate.delete(MFA_MODE_PREFIX + mfaToken);
         redisTemplate.delete(MFA_EMAIL_CODE_PREFIX + mfaToken);
@@ -132,11 +131,7 @@ public class MfaService {
         Long userId = consumePendingToken(mfaToken);
         SsoUser user = requireUser(userId);
         String mode = redisTemplate.opsForValue().get(MFA_MODE_PREFIX + mfaToken);
-        if (MFA_MODE_EMAIL.equals(mode)) {
-            assertEmailCode(mfaToken, code);
-        } else {
-            assertMfaCode(user.getMfaSecret(), code);
-        }
+        verifyChallenge(mfaToken, user, code);
         String redirect = redisTemplate.opsForValue().get(MFA_REDIRECT_PREFIX + mfaToken);
         if (redirect == null || redirect.isBlank()) {
             redirect = "/";
@@ -177,13 +172,16 @@ public class MfaService {
         auditSupport.log(AuditEventType.MFA_DISABLE, user.getUsername(), "禁用 MFA");
     }
 
-    private void sendEmailOtp(SsoUser user, String mfaToken) {
-        if (!StringUtils.hasText(user.getEmail())) {
-            throw new SsoException(ErrorCode.BAD_REQUEST, "新设备登录需邮件验证，但用户未配置邮箱");
+    private void verifyChallenge(String mfaToken, SsoUser user, String code) {
+        String mode = redisTemplate.opsForValue().get(MFA_MODE_PREFIX + mfaToken);
+        if (mode == null) {
+            mode = MfaStepUpChannelSelector.MODE_TOTP;
         }
-        String code = String.format("%06d", new SecureRandom().nextInt(1_000_000));
-        redisTemplate.opsForValue().set(MFA_EMAIL_CODE_PREFIX + mfaToken, code, Duration.ofMinutes(5));
-        emailService.sendLoginOtp(user.getEmail(), code, 5);
+        if (MfaStepUpChannelSelector.MODE_TOTP.equals(mode)) {
+            assertMfaCode(user.getMfaSecret(), code);
+        } else {
+            stepUpChannelSelector.resolveAdapter(mode).verifyCode(mfaToken, code);
+        }
     }
 
     private Long consumePendingToken(String mfaToken) {
@@ -197,13 +195,6 @@ public class MfaService {
     private void assertMfaCode(String secret, String code) {
         if (!TotpUtil.verify(secret, code, 1)) {
             throw new SsoException(ErrorCode.INVALID_CREDENTIALS, "验证码无效");
-        }
-    }
-
-    private void assertEmailCode(String mfaToken, String code) {
-        String expected = redisTemplate.opsForValue().get(MFA_EMAIL_CODE_PREFIX + mfaToken);
-        if (expected == null || !expected.equals(code)) {
-            throw new SsoException(ErrorCode.INVALID_CREDENTIALS, "邮件验证码无效或已过期");
         }
     }
 

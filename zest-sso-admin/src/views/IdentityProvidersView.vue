@@ -2,10 +2,11 @@
 import { onMounted, reactive, ref } from 'vue'
 import { Modal, message } from 'ant-design-vue'
 import { identityProviderApi } from '@/api/admin'
-import type { IdentityProviderInfo } from '@/types'
+import type { FederatedIdpAdapterInfo, IdentityProviderInfo } from '@/types'
 
 const loading = ref(false)
 const providers = ref<IdentityProviderInfo[]>([])
+const adapters = ref<FederatedIdpAdapterInfo[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
@@ -16,6 +17,7 @@ const form = reactive({
   alias: '',
   displayName: '',
   providerType: 'OIDC' as 'OIDC' | 'SAML',
+  adapterKey: 'generic-oidc',
   discoveryUri: '',
   clientId: '',
   clientSecret: '',
@@ -36,6 +38,7 @@ function resetForm() {
     alias: '',
     displayName: '',
     providerType: 'OIDC',
+    adapterKey: 'generic-oidc',
     discoveryUri: '',
     clientId: '',
     clientSecret: '',
@@ -50,6 +53,28 @@ function resetForm() {
     samlSsoUrl: '',
     samlVerificationCertificate: '',
   })
+}
+
+async function loadAdapters() {
+  try {
+    adapters.value = await identityProviderApi.listAdapters()
+  } catch {
+    adapters.value = []
+  }
+}
+
+function applyAdapterDefaults(key: string) {
+  const adapter = adapters.value.find((a) => a.key === key)
+  if (!adapter) return
+  if (adapter.defaultEndpoints?.discoveryUri) {
+    form.discoveryUri = adapter.defaultEndpoints.discoveryUri
+  }
+  if (adapter.defaultClaims?.usernameClaim) form.usernameClaim = adapter.defaultClaims.usernameClaim
+  if (adapter.defaultClaims?.emailClaim) form.emailClaim = adapter.defaultClaims.emailClaim
+  if (adapter.defaultClaims?.displayNameClaim) form.displayNameClaim = adapter.defaultClaims.displayNameClaim
+  if (key === 'feishu' && !form.scopes) form.scopes = 'openid,profile,email'
+  if (key === 'dingtalk' && !form.scopes) form.scopes = 'openid,profile'
+  if (key === 'wecom' && !form.scopes) form.scopes = 'snsapi_privateinfo'
 }
 
 async function loadProviders() {
@@ -77,6 +102,7 @@ function openEdit(record: IdentityProviderInfo) {
     alias: record.alias,
     displayName: record.displayName,
     providerType: (record.providerType === 'SAML' ? 'SAML' : 'OIDC') as 'OIDC' | 'SAML',
+    adapterKey: record.adapterKey || 'generic-oidc',
     discoveryUri: record.discoveryUri || '',
     clientId: record.clientId || '',
     clientSecret: '',
@@ -151,7 +177,8 @@ async function handleSubmit() {
               samlVerificationCertificate: form.samlVerificationCertificate,
             }
           : {
-              discoveryUri: form.discoveryUri,
+              adapterKey: form.adapterKey,
+              discoveryUri: form.discoveryUri || undefined,
               clientId: form.clientId,
               clientSecret: form.clientSecret,
               scopes: form.scopes,
@@ -186,7 +213,10 @@ function confirmDelete(record: IdentityProviderInfo) {
   })
 }
 
-onMounted(loadProviders)
+onMounted(async () => {
+  await loadAdapters()
+  await loadProviders()
+})
 </script>
 
 <template>
@@ -209,6 +239,7 @@ onMounted(loadProviders)
     >
       <a-table-column title="Alias" data-index="alias" key="alias" />
       <a-table-column title="名称" data-index="displayName" key="displayName" />
+      <a-table-column title="适配器" data-index="adapterKey" key="adapterKey" width="110" />
       <a-table-column title="类型" data-index="providerType" key="providerType" width="80" />
       <a-table-column title="登录地址" key="loginUrl">
         <template #default="{ record }">
@@ -248,8 +279,16 @@ onMounted(loadProviders)
       </a-form-item>
 
       <template v-if="form.providerType === 'OIDC'">
-        <a-form-item label="OIDC Discovery URI" required>
-          <a-input v-model:value="form.discoveryUri" placeholder="https://.../.well-known/openid-configuration" />
+        <a-form-item label="平台适配器">
+          <a-select v-model:value="form.adapterKey" :disabled="!!editing" @change="(v: string) => applyAdapterDefaults(v)">
+            <a-select-option v-for="a in adapters" :key="a.key" :value="a.key">
+              {{ a.displayName }}
+              <span v-if="!a.productionReady">（预览）</span>
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="OIDC Discovery URI">
+          <a-input v-model:value="form.discoveryUri" placeholder="飞书/钉钉可留空由适配器填充" />
         </a-form-item>
         <a-row :gutter="16">
           <a-col :span="12">

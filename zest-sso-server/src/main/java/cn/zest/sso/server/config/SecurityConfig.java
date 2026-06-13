@@ -4,6 +4,7 @@ import cn.zest.sso.server.handler.AdminSecurityHandlers;
 import cn.zest.sso.server.security.FormLoginMfaSuccessHandler;
 import cn.zest.sso.server.security.FederatedLoginSuccessHandler;
 import cn.zest.sso.server.security.LoginRateLimitFilter;
+import cn.zest.sso.server.federation.oauth.FederatedDelegatingAccessTokenResponseClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -51,17 +52,20 @@ public class SecurityConfig {
     private final AdminSecurityHandlers adminSecurityHandlers;
     private final FederatedLoginSuccessHandler federatedLoginSuccessHandler;
     private final FormLoginMfaSuccessHandler formLoginMfaSuccessHandler;
+    private final FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient;
 
     public SecurityConfig(SsoProperties ssoProperties,
                           LoginRateLimitFilter loginRateLimitFilter,
                           AdminSecurityHandlers adminSecurityHandlers,
                           FederatedLoginSuccessHandler federatedLoginSuccessHandler,
-                          @Lazy FormLoginMfaSuccessHandler formLoginMfaSuccessHandler) {
+                          @Lazy FormLoginMfaSuccessHandler formLoginMfaSuccessHandler,
+                          FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient) {
         this.ssoProperties = ssoProperties;
         this.loginRateLimitFilter = loginRateLimitFilter;
         this.adminSecurityHandlers = adminSecurityHandlers;
         this.federatedLoginSuccessHandler = federatedLoginSuccessHandler;
         this.formLoginMfaSuccessHandler = formLoginMfaSuccessHandler;
+        this.federatedAccessTokenResponseClient = federatedAccessTokenResponseClient;
     }
 
     @Bean
@@ -96,6 +100,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(adminSecurityHandlers))
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
+                        .tokenEndpoint(token -> token.accessTokenResponseClient(federatedAccessTokenResponseClient))
                         .successHandler(federatedLoginSuccessHandler))
                 .saml2Login(saml2 -> saml2
                         .loginPage("/login")

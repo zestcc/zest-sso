@@ -10,10 +10,10 @@ import cn.zest.sso.server.domain.dto.CreateClientRequest;
 
 import cn.zest.sso.server.domain.dto.UpdateClientRequest;
 
+import cn.zest.sso.server.domain.vo.ClientOnboardingVO;
 import cn.zest.sso.server.domain.vo.ClientVO;
-
 import cn.zest.sso.server.domain.vo.CreateClientResultVO;
-
+import cn.zest.sso.server.service.ClientOnboardingService;
 import cn.zest.sso.server.service.OAuthClientService;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -57,8 +57,21 @@ public class AdminClientController {
 
 
     private final OAuthClientService clientService;
+    private final ClientOnboardingService clientOnboardingService;
 
+    @GetMapping("/onboarding/template")
+    public ApiResponse<ClientOnboardingVO> onboardingTemplate(
+            @RequestParam(defaultValue = "spring-boot") String stack,
+            @RequestParam(required = false) String redirectUri) {
+        return ApiResponse.success(clientOnboardingService.template(stack, redirectUri));
+    }
 
+    @PostMapping("/onboarding/quick-create")
+    public ApiResponse<CreateClientResultVO> quickCreate(
+            @RequestParam String appName,
+            @RequestParam(required = false) String redirectUri) {
+        return ApiResponse.success(clientOnboardingService.quickCreate(appName, redirectUri));
+    }
 
     @GetMapping
 

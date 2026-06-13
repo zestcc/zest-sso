@@ -54,3 +54,24 @@ probes:
 env:
   SPRING_PROFILES_ACTIVE: prod
   ZEST_SSO_SECURITY_CORS_ALLOWED_ORIGINS: "https://app.example.com,https://flow.example.com"
+
+# 可选模块（对应 zest.sso.modules.*，通过环境变量覆盖）
+modules:
+  federation: true
+  scim: true
+  webauthn: true
+  webhooks: false
+  alerts: false
+  smsMfa: false
+  wecomFederation: false
+  clientOnboardingWizard: true
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCpuUtilization: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

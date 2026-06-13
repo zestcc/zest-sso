@@ -13,4 +13,5 @@ import lombok.experimental.SuperBuilder;
 public class CreateClientResultVO extends ClientVO {
 
     private String clientSecret;
+    private ClientOnboardingVO onboarding;
 }

@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class OAuth2ClientRegistrationSupport {
@@ -40,6 +42,9 @@ public class OAuth2ClientRegistrationSupport {
             applyDiscovery(builder, provider.getDiscoveryUri());
         } else {
             throw new SsoException(ErrorCode.BAD_REQUEST, "需要 Discovery URI 或 endpoint_config 手动端点");
+        }
+        if (StringUtils.hasText(provider.getAdapterKey())) {
+            builder.providerConfigurationMetadata(Map.of("adapter_key", provider.getAdapterKey()));
         }
         return builder.build();
     }

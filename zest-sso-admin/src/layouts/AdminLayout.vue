@@ -43,6 +43,8 @@ const menuItems = computed(() => {
     { key: 'groups', icon: UsergroupAddOutlined, label: '用户组', path: '/groups', visible: canManageRoles(user) },
     { key: 'identity-providers', icon: CloudOutlined, label: '身份联邦', path: '/identity-providers', visible: canManageClients(user) },
     { key: 'ldap-providers', icon: TeamOutlined, label: 'LDAP/AD', path: '/ldap-providers', visible: canManageClients(user) },
+    { key: 'modules', icon: ApiOutlined, label: '可插拔模块', path: '/modules', visible: canManageClients(user) },
+    { key: 'webhooks', icon: ApiOutlined, label: 'Webhook', path: '/webhooks', visible: canManageClients(user) },
     { key: 'sessions', icon: ApiOutlined, label: '会话管理', path: '/sessions', visible: canManageClients(user) },
     { key: 'authorizations', icon: KeyOutlined, label: '授权令牌', path: '/authorizations', visible: canManageClients(user) },
     { key: 'audit-logs', icon: AuditOutlined, label: '审计日志', path: '/audit-logs', visible: canViewAudit(user) },
