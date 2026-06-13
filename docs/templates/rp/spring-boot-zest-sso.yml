@@ -1,0 +1,26 @@
+# Spring Boot 接入 ZestSSO 示例配置
+# 复制到 application.yml 或 application-prod.yml
+
+zest:
+  sso:
+    client:
+      enabled: true
+      issuer: https://sso.example.com
+      client-id: my-spring-app
+      client-secret: ${ZEST_SSO_CLIENT_SECRET}
+      redirect-uri: https://my-app.example.com/login/oauth2/code/zest-sso
+      scopes:
+        - openid
+        - profile
+        - email
+        - roles
+      # Back-Channel（可选，推荐）
+      backchannel-logout-path: /auth/backchannel-logout
+
+# 若 RP 同时作为 Resource Server 校验 ZestSSO JWT：
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://sso.example.com

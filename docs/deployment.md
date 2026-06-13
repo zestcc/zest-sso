@@ -176,3 +176,37 @@ mysqldump -u root -p zest_sso > zest_sso_backup.sql
 4. Flyway 自动迁移
 5. 验证健康检查和 OIDC 端点
 6. 逐步切流
+
+## 7. Kubernetes（Helm）
+
+中小企业推荐使用 Helm 小集群部署（2 副本 + Ingress TLS）：
+
+```bash
+# 1. 构建并推送镜像
+mvn -pl zest-sso-server -am package -DskipTests
+docker build -t registry.example.com/zest/zest-sso-server:1.0.0-SNAPSHOT -f deploy/Dockerfile .
+
+# 2. 准备 Secret（MySQL / Redis / JWT PEM）
+kubectl create secret generic zest-sso-mysql --from-literal=password='***'
+kubectl create secret generic zest-sso-redis --from-literal=password='***'
+kubectl create secret generic zest-sso-jwt \
+  --from-file=jwt-private.pem=./jwt-private.pem \
+  --from-file=jwt-public.pem=./jwt-public.pem
+
+# 3. 修改 deploy/helm/zest-sso/values.yaml 后安装
+helm lint deploy/helm/zest-sso
+helm upgrade --install zest-sso deploy/helm/zest-sso -n iam --create-namespace
+```
+
+监控：导入 `deploy/monitoring/grafana-zest-sso-dashboard.json`，加载 `prometheus-alerts.yaml`。
+
+备份：每日执行 `scripts/backup-prod.ps1` 或 `scripts/backup-prod.sh`（见 §4.2）。
+
+## 8. 中小企业补齐包
+
+| 主题 | 文档 |
+|------|------|
+| 差距闭环路线图 | [docs/sme-gap-closure-roadmap.md](docs/sme-gap-closure-roadmap.md) |
+| 钉钉/企微/飞书 | [docs/domestic-idp-guide.md](docs/domestic-idp-guide.md) |
+| RP 集成 Cookbook | [docs/rp-integration-cookbook.md](docs/rp-integration-cookbook.md) |
+| 合规材料 | [docs/compliance/README.md](docs/compliance/README.md) |

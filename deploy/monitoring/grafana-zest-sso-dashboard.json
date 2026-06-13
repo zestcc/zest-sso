@@ -1,0 +1,69 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "登录 QPS",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(zest_sso_login_success_total[5m]))",
+          "legendFormat": "success"
+        },
+        {
+          "expr": "sum(rate(zest_sso_login_failure_total[5m]))",
+          "legendFormat": "failure"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "title": "登出 / Token 吊销",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(zest_sso_logout_total[5m]))", "legendFormat": "logout" },
+        { "expr": "sum(rate(zest_sso_token_revoked_total[5m]))", "legendFormat": "revoked" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "JVM / HTTP（Spring Boot Actuator）",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "process_cpu_usage{job=\"zest-sso\"}", "legendFormat": "cpu" },
+        { "expr": "jvm_memory_used_bytes{job=\"zest-sso\",area=\"heap\"}", "legendFormat": "heap" }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["zest-sso", "iam"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "ZestSSO SME Dashboard",
+  "uid": "zest-sso-sme",
+  "version": 1
+}

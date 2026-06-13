@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zest-sso.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "zest-sso.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "zest-sso.name" . }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "zest-sso.name" . }}
+    spec:
+      containers:
+        - name: zest-sso
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 9000
+              name: http
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.env.SPRING_PROFILES_ACTIVE | quote }}
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://{{ .Values.mysql.host }}:{{ .Values.mysql.port }}/{{ .Values.mysql.database }}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.mysql.username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.existingSecret }}
+                  key: {{ .Values.mysql.passwordKey }}
+            - name: SPRING_DATA_REDIS_HOST
+              value: {{ .Values.redis.host | quote }}
+            - name: SPRING_DATA_REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.existingSecret }}
+                  key: {{ .Values.redis.passwordKey }}
+            - name: ZEST_SSO_ISSUER
+              value: {{ .Values.issuer | quote }}
+            - name: ZEST_SSO_JWT_PRIVATE_KEY_PATH
+              value: /secrets/jwt/jwt-private.pem
+            - name: ZEST_SSO_JWT_PUBLIC_KEY_PATH
+              value: /secrets/jwt/jwt-public.pem
+            - name: ZEST_SSO_JWT_KEY_ID
+              value: {{ .Values.jwt.keyId | quote }}
+            - name: ZEST_SSO_SECURITY_CORS_ALLOWED_ORIGINS
+              value: {{ .Values.env.ZEST_SSO_SECURITY_CORS_ALLOWED_ORIGINS | quote }}
+          volumeMounts:
+            - name: jwt-keys
+              mountPath: /secrets/jwt
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.livenessPath }}
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readinessPath }}
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: jwt-keys
+          secret:
+            secretName: {{ .Values.jwt.existingSecret }}
+            items:
+              - key: {{ .Values.jwt.privateKeyKey }}
+                path: jwt-private.pem
+              - key: {{ .Values.jwt.publicKeyKey }}
+                path: jwt-public.pem

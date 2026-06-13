@@ -57,7 +57,7 @@
 | WebAuthn / Passkey | **已实现** |
 | JWT 密钥持久化 / 审计归档 / Webhook | **已实现**（M1，见 `docs/full-landing-roadmap.md`） |
 | SCIM PATCH / Bulk 完整兼容 | 部分（M2） |
-| 等保 / SOC2 合规文档与渗透报告 | 待外部评估 |
+| 等保 / SOC2 合规文档与渗透报告 | 材料包已就绪，待外部机构出报告（见 `docs/compliance/`） |
 | 地理容灾 / 多活 | 依赖基础设施 |
 
 ---

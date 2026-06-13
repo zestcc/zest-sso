@@ -1,0 +1,14 @@
+{
+  "alias": "dingtalk",
+  "displayName": "钉钉登录",
+  "providerType": "OIDC",
+  "discoveryUri": "https://login.dingtalk.com/oauth2/.well-known/openid-configuration",
+  "clientId": "REPLACE_WITH_DINGTALK_APP_KEY",
+  "clientSecret": "REPLACE_WITH_DINGTALK_APP_SECRET",
+  "scopes": "openid,profile",
+  "usernameClaim": "sub",
+  "emailClaim": "email",
+  "displayNameClaim": "name",
+  "defaultRoleCodes": "USER",
+  "_comment": "Discovery URL 因钉钉版本可能不同，请以开放平台文档为准"
+}

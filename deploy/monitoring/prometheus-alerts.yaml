@@ -1,0 +1,41 @@
+# Prometheus 告警规则 — ZestSSO 中小企业生产
+groups:
+  - name: zest-sso
+    rules:
+      - alert: ZestSsoDown
+        expr: up{job="zest-sso"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ZestSSO 实例不可用"
+          description: "{{ $labels.instance }} 超过 2 分钟无 metrics"
+
+      - alert: ZestSsoHighLoginFailureRate
+        expr: |
+          sum(rate(zest_sso_login_failure_total[5m]))
+          / clamp_min(sum(rate(zest_sso_login_success_total[5m])) + sum(rate(zest_sso_login_failure_total[5m])), 0.001)
+          > 0.3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "登录失败率过高 (>30%)"
+          description: "可能存在暴力破解或 IdP 故障"
+
+      - alert: ZestSsoHeapHigh
+        expr: jvm_memory_used_bytes{job="zest-sso",area="heap"} / jvm_memory_max_bytes{job="zest-sso",area="heap"} > 0.85
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM 堆内存使用 >85%"
+
+      - alert: ZestSsoBackchannelDeliveryFailed
+        expr: increase(zest_sso_backchannel_logout_failure_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Back-Channel 登出投递失败增多"
+          description: "检查 RP 回调 URL 与网络连通性"

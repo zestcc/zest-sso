@@ -87,10 +87,13 @@ npm run dev
 ## 文档
 
 - [架构设计](docs/architecture.md)
-- [部署手册](docs/deployment.md)
+- [部署手册](docs/deployment.md)（含 Helm / 备份 / 监控）
 - [集成指南](docs/integration-guide.md)
+- [中小企业差距闭环](docs/sme-gap-closure-roadmap.md)
+- [RP 集成 Cookbook](docs/rp-integration-cookbook.md)
+- [国内 IdP（飞书/钉钉/企微）](docs/domestic-idp-guide.md)
+- [合规材料包](docs/compliance/README.md)
 - [用户手册](docs/user-manual.md)
-- [测试报告](docs/test-report.md)
 
 ## 构建
 

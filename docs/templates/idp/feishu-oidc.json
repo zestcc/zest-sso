@@ -1,0 +1,13 @@
+{
+  "alias": "feishu",
+  "displayName": "飞书登录",
+  "providerType": "OIDC",
+  "discoveryUri": "https://open.feishu.cn/.well-known/openid-configuration",
+  "clientId": "REPLACE_WITH_FEISHU_APP_ID",
+  "clientSecret": "REPLACE_WITH_FEISHU_APP_SECRET",
+  "scopes": "openid,profile,email",
+  "usernameClaim": "sub",
+  "emailClaim": "email",
+  "displayNameClaim": "name",
+  "defaultRoleCodes": "USER"
+}
