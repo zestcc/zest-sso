@@ -25,7 +25,7 @@ export function parseAuthenticationOptions(options: Record<string, unknown>) {
       id: typeof c.id === 'string' ? bufferFromBase64Url(c.id) : c.id,
     }))
   }
-  return copy as PublicKeyCredentialRequestOptions
+  return copy as unknown as PublicKeyCredentialRequestOptions
 }
 
 export function parseRegistrationOptions(options: Record<string, unknown>) {
@@ -43,7 +43,7 @@ export function parseRegistrationOptions(options: Record<string, unknown>) {
       id: typeof c.id === 'string' ? bufferFromBase64Url(c.id) : c.id,
     }))
   }
-  return copy as PublicKeyCredentialCreationOptions
+  return copy as unknown as PublicKeyCredentialCreationOptions
 }
 
 export function credentialToJson(credential: Credential): Record<string, unknown> {

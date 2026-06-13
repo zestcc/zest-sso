@@ -1,8 +1,9 @@
 package cn.zest.sso.server.mfa;
 
+import cn.zest.sso.plugin.mfa.MfaChannelAdapter;
+import cn.zest.sso.plugin.mfa.MfaUserContext;
 import cn.zest.sso.server.config.SsoProperties;
 import cn.zest.sso.server.domain.entity.SsoUser;
-import cn.zest.sso.server.mfa.spi.MfaChannelAdapter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,6 +21,10 @@ public class MfaStepUpChannelSelector {
 
     private final SsoProperties ssoProperties;
     private final MfaChannelRegistry channelRegistry;
+
+    public static MfaUserContext toUserContext(SsoUser user) {
+        return new MfaUserContext(user.getUsername(), user.getEmail());
+    }
 
     public String resolveBoundMode(SsoUser user) {
         if (user.getMfaEnabled() != null && user.getMfaEnabled() == 1) {
@@ -40,16 +45,16 @@ public class MfaStepUpChannelSelector {
                 if (sms != null) {
                     return sms;
                 }
-            } else if ("email".equals(key) && channelRegistry.resolve("email").isEnabled()) {
+            } else if ("email".equals(key) && isChannelEnabled("email")) {
                 return MODE_EMAIL;
             }
         }
-        if (channelRegistry.resolve("email").isEnabled()) {
+        if (isChannelEnabled("email")) {
             return MODE_EMAIL;
         }
         throw new cn.zest.sso.common.exception.SsoException(
                 cn.zest.sso.common.exception.ErrorCode.BAD_REQUEST,
-                "无可用的 step-up MFA 通道，请启用邮件或短信模块");
+                "无可用的 step-up MFA 通道，请启用邮件或短信插件");
     }
 
     public MfaChannelAdapter resolveAdapter(String mode) {
@@ -68,9 +73,16 @@ public class MfaStepUpChannelSelector {
             return null;
         }
         return Arrays.stream(new String[]{"aliyun-sms", "tencent-sms"})
-                .filter(key -> channelRegistry.resolve(key).isEnabled())
+                .filter(key -> channelRegistry.hasChannel(key) && isChannelEnabled(key))
                 .findFirst()
                 .map(key -> "aliyun-sms".equals(key) ? MODE_ALIYUN_SMS : MODE_TENCENT_SMS)
                 .orElse(null);
+    }
+
+    private boolean isChannelEnabled(String key) {
+        if (!channelRegistry.hasChannel(key)) {
+            return false;
+        }
+        return channelRegistry.resolve(key).isEnabled();
     }
 }

@@ -44,6 +44,7 @@ const menuItems = computed(() => {
     { key: 'identity-providers', icon: CloudOutlined, label: '身份联邦', path: '/identity-providers', visible: canManageClients(user) },
     { key: 'ldap-providers', icon: TeamOutlined, label: 'LDAP/AD', path: '/ldap-providers', visible: canManageClients(user) },
     { key: 'modules', icon: ApiOutlined, label: '可插拔模块', path: '/modules', visible: canManageClients(user) },
+    { key: 'alert-channels', icon: ApiOutlined, label: '告警通道', path: '/alert-channels', visible: canManageClients(user) },
     { key: 'webhooks', icon: ApiOutlined, label: 'Webhook', path: '/webhooks', visible: canManageClients(user) },
     { key: 'sessions', icon: ApiOutlined, label: '会话管理', path: '/sessions', visible: canManageClients(user) },
     { key: 'authorizations', icon: KeyOutlined, label: '授权令牌', path: '/authorizations', visible: canManageClients(user) },

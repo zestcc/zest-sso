@@ -2,10 +2,10 @@ package cn.zest.sso.server.mfa.channel;
 
 import cn.zest.sso.common.exception.ErrorCode;
 import cn.zest.sso.common.exception.SsoException;
+import cn.zest.sso.plugin.mfa.MfaChannelAdapter;
+import cn.zest.sso.plugin.mfa.MfaChannelDescriptor;
+import cn.zest.sso.plugin.mfa.MfaUserContext;
 import cn.zest.sso.server.config.SsoProperties;
-import cn.zest.sso.server.domain.entity.SsoUser;
-import cn.zest.sso.server.mfa.spi.MfaChannelAdapter;
-import cn.zest.sso.server.mfa.spi.MfaChannelDescriptor;
 import cn.zest.sso.server.security.TotpUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,10 +24,20 @@ public class TotpMfaChannelAdapter implements MfaChannelAdapter {
     }
 
     @Override
+    public String pluginName() {
+        return "TOTP 验证器";
+    }
+
+    @Override
+    public Map<String, String> configFieldHints() {
+        return Map.of();
+    }
+
+    @Override
     public MfaChannelDescriptor descriptor() {
         return new MfaChannelDescriptor(
-                channelKey(), "TOTP 验证器", "Google Authenticator / 微软验证器等",
-                isEnabled(), true, Map.of());
+                channelKey(), pluginName(), "Google Authenticator / 微软验证器等",
+                true, isEnabled(), true, configFieldHints());
     }
 
     @Override
@@ -36,7 +46,7 @@ public class TotpMfaChannelAdapter implements MfaChannelAdapter {
     }
 
     @Override
-    public String sendChallenge(SsoUser user, String challengeToken) {
+    public String sendChallenge(MfaUserContext user, String challengeToken) {
         throw new SsoException(ErrorCode.BAD_REQUEST, "TOTP 无需发送验证码");
     }
 

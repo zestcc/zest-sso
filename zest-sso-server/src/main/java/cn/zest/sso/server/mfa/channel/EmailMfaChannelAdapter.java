@@ -2,10 +2,10 @@ package cn.zest.sso.server.mfa.channel;
 
 import cn.zest.sso.common.exception.ErrorCode;
 import cn.zest.sso.common.exception.SsoException;
+import cn.zest.sso.plugin.mfa.MfaChannelAdapter;
+import cn.zest.sso.plugin.mfa.MfaChannelDescriptor;
+import cn.zest.sso.plugin.mfa.MfaUserContext;
 import cn.zest.sso.server.config.SsoProperties;
-import cn.zest.sso.server.domain.entity.SsoUser;
-import cn.zest.sso.server.mfa.spi.MfaChannelAdapter;
-import cn.zest.sso.server.mfa.spi.MfaChannelDescriptor;
 import cn.zest.sso.server.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -32,27 +32,37 @@ public class EmailMfaChannelAdapter implements MfaChannelAdapter {
     }
 
     @Override
+    public String pluginName() {
+        return "邮件 OTP";
+    }
+
+    @Override
+    public Map<String, String> configFieldHints() {
+        return Map.of("mail.enabled", "需启用 zest.sso.mail.enabled");
+    }
+
+    @Override
     public MfaChannelDescriptor descriptor() {
         return new MfaChannelDescriptor(
-                channelKey(), "邮件 OTP", "自适应登录风险时发送邮件验证码",
-                isEnabled(), true,
-                Map.of("mail.enabled", "需启用 zest.sso.mail.enabled"));
+                channelKey(), pluginName(), "自适应登录风险时发送邮件验证码",
+                true, isEnabled(), ssoProperties.getMail().isEnabled(), configFieldHints());
     }
 
     @Override
     public boolean isEnabled() {
-        return ssoProperties.getMfa().getChannels().getEmail().isEnabled();
+        return ssoProperties.getMfa().getChannels().getEmail().isEnabled()
+                && ssoProperties.getMail().isEnabled();
     }
 
     @Override
-    public String sendChallenge(SsoUser user, String challengeToken) {
-        if (!StringUtils.hasText(user.getEmail())) {
+    public String sendChallenge(MfaUserContext user, String challengeToken) {
+        if (!StringUtils.hasText(user.email())) {
             throw new SsoException(ErrorCode.BAD_REQUEST, "用户未配置邮箱，无法发送邮件 OTP");
         }
         String code = String.format("%06d", new SecureRandom().nextInt(1_000_000));
         redisTemplate.opsForValue().set(CODE_PREFIX + challengeToken, code, Duration.ofMinutes(5));
-        emailService.sendLoginOtp(user.getEmail(), code, 5);
-        return maskEmail(user.getEmail());
+        emailService.sendLoginOtp(user.email(), code, 5);
+        return maskEmail(user.email());
     }
 
     @Override

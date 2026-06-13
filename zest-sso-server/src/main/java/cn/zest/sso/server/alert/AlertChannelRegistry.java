@@ -1,7 +1,7 @@
 package cn.zest.sso.server.alert;
 
-import cn.zest.sso.server.alert.spi.AlertChannelAdapter;
-import cn.zest.sso.server.alert.spi.AlertChannelDescriptor;
+import cn.zest.sso.plugin.alert.AlertChannelAdapter;
+import cn.zest.sso.plugin.alert.AlertChannelDescriptor;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -25,6 +25,10 @@ public class AlertChannelRegistry {
                 .map(AlertChannelAdapter::descriptor)
                 .sorted(Comparator.comparing(AlertChannelDescriptor::key))
                 .toList();
+    }
+
+    public boolean hasChannel(String channelKey) {
+        return channelsByKey.containsKey(channelKey);
     }
 
     public AlertChannelAdapter resolve(String channelKey) {

@@ -25,6 +25,8 @@ import type {
   SessionInfo,
   SettingsInfo,
   TenantInfo,
+  WebauthnCredentialInfo,
+  WebauthnOptions,
   UpdateClientPayload,
   UpdateIdentityProviderPayload,
   UpdateRolePayload,
@@ -324,5 +326,29 @@ export const webhookApi = {
   },
   retry(id: number) {
     return unwrap(http.post(`/api/admin/webhook-deliveries/${id}/retry`))
+  },
+}
+
+export const pluginApi = {
+  list() {
+    return unwrap<import('@/types').PluginConfigInfo[]>(http.get('/api/admin/plugins'))
+  },
+  save(pluginKey: string, enabled: boolean, config: Record<string, string>) {
+    return unwrap<import('@/types').PluginConfigInfo>(http.put(`/api/admin/plugins/${pluginKey}`, { enabled, config }))
+  },
+}
+
+export const alertChannelApi = {
+  list() {
+    return unwrap<import('@/types').AlertChannelConfigInfo[]>(http.get('/api/admin/alert-channels'))
+  },
+  create(payload: import('@/types').AlertChannelConfigInfo) {
+    return unwrap<import('@/types').AlertChannelConfigInfo>(http.post('/api/admin/alert-channels', payload))
+  },
+  update(id: number, payload: import('@/types').AlertChannelConfigInfo) {
+    return unwrap<import('@/types').AlertChannelConfigInfo>(http.put(`/api/admin/alert-channels/${id}`, payload))
+  },
+  remove(id: number) {
+    return unwrap(http.delete(`/api/admin/alert-channels/${id}`))
   },
 }

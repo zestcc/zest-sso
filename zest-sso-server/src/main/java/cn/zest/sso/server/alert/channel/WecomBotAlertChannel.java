@@ -1,8 +1,7 @@
 package cn.zest.sso.server.alert.channel;
 
-import cn.zest.sso.server.alert.spi.AlertChannelAdapter;
-import cn.zest.sso.server.alert.spi.AlertChannelDescriptor;
-import cn.zest.sso.server.config.SsoProperties;
+import cn.zest.sso.plugin.alert.AlertChannelAdapter;
+import cn.zest.sso.plugin.alert.AlertChannelDescriptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,7 +17,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class WecomBotAlertChannel implements AlertChannelAdapter {
 
-    private final SsoProperties ssoProperties;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
@@ -27,11 +25,20 @@ public class WecomBotAlertChannel implements AlertChannelAdapter {
     }
 
     @Override
+    public String pluginName() {
+        return "企业微信机器人";
+    }
+
+    @Override
+    public Map<String, String> configFieldHints() {
+        return Map.of("webhookUrl", "机器人 Webhook URL");
+    }
+
+    @Override
     public AlertChannelDescriptor descriptor() {
         return new AlertChannelDescriptor(
-                channelKey(), "企业微信机器人", "IAM 事件推送至企微群机器人",
-                ssoProperties.getModules().isAlerts(),
-                Map.of("webhookUrl", "机器人 Webhook URL"));
+                channelKey(), pluginName(), "IAM 事件推送至企微群机器人",
+                true, configFieldHints());
     }
 
     @Override

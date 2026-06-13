@@ -1,9 +1,7 @@
 package cn.zest.sso.server.alert.channel;
 
-import cn.zest.sso.server.alert.spi.AlertChannelAdapter;
-import cn.zest.sso.server.alert.spi.AlertChannelDescriptor;
-import cn.zest.sso.server.config.SsoProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.zest.sso.plugin.alert.AlertChannelAdapter;
+import cn.zest.sso.plugin.alert.AlertChannelDescriptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,8 +17,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DingtalkBotAlertChannel implements AlertChannelAdapter {
 
-    private final SsoProperties ssoProperties;
-    private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
@@ -29,11 +25,20 @@ public class DingtalkBotAlertChannel implements AlertChannelAdapter {
     }
 
     @Override
+    public String pluginName() {
+        return "钉钉机器人";
+    }
+
+    @Override
+    public Map<String, String> configFieldHints() {
+        return Map.of("webhookUrl", "机器人 Webhook URL", "secret", "可选加签 secret");
+    }
+
+    @Override
     public AlertChannelDescriptor descriptor() {
         return new AlertChannelDescriptor(
-                channelKey(), "钉钉机器人", "IAM 事件推送至钉钉群机器人",
-                ssoProperties.getModules().isAlerts(),
-                Map.of("webhookUrl", "机器人 Webhook URL", "secret", "可选加签 secret"));
+                channelKey(), pluginName(), "IAM 事件推送至钉钉群机器人",
+                true, configFieldHints());
     }
 
     @Override

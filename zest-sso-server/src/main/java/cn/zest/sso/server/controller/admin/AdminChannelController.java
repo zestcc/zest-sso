@@ -1,10 +1,10 @@
 package cn.zest.sso.server.controller.admin;
 
 import cn.zest.sso.common.api.ApiResponse;
+import cn.zest.sso.plugin.alert.AlertChannelDescriptor;
+import cn.zest.sso.plugin.mfa.MfaChannelDescriptor;
 import cn.zest.sso.server.alert.AlertChannelRegistry;
-import cn.zest.sso.server.alert.spi.AlertChannelDescriptor;
 import cn.zest.sso.server.mfa.MfaChannelRegistry;
-import cn.zest.sso.server.mfa.spi.MfaChannelDescriptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

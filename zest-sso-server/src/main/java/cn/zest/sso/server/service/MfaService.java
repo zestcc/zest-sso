@@ -9,7 +9,7 @@ import cn.zest.sso.server.domain.vo.LoginResultVO;
 import cn.zest.sso.server.domain.vo.MfaSetupVO;
 import cn.zest.sso.server.domain.vo.UserInfoVO;
 import cn.zest.sso.server.mfa.MfaStepUpChannelSelector;
-import cn.zest.sso.server.mfa.spi.MfaChannelAdapter;
+import cn.zest.sso.plugin.mfa.MfaChannelAdapter;
 import cn.zest.sso.server.security.TotpUtil;
 import cn.zest.sso.server.support.AdminAuditSupport;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +69,7 @@ public class MfaService {
         String hint = null;
         if (!MfaStepUpChannelSelector.MODE_TOTP.equals(mode)) {
             MfaChannelAdapter adapter = stepUpChannelSelector.resolveAdapter(mode);
-            hint = adapter.sendChallenge(user, mfaToken);
+            hint = adapter.sendChallenge(MfaStepUpChannelSelector.toUserContext(user), mfaToken);
             loginRiskService.markStepUpPending(user.getUsername());
         }
         return LoginResultVO.builder()

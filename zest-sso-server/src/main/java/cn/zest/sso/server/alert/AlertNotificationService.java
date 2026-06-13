@@ -1,8 +1,10 @@
 package cn.zest.sso.server.alert;
 
 import cn.zest.sso.common.enums.AuditEventType;
-import cn.zest.sso.server.alert.spi.AlertChannelAdapter;
+import cn.zest.sso.plugin.alert.AlertChannelAdapter;
 import cn.zest.sso.server.config.SsoProperties;
+import cn.zest.sso.server.domain.vo.AlertChannelConfigVO;
+import cn.zest.sso.server.plugin.AlertChannelConfigService;
 import cn.zest.sso.server.service.WebhookDeliveryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class AlertNotificationService {
 
     private final SsoProperties ssoProperties;
     private final AlertChannelRegistry alertChannelRegistry;
+    private final AlertChannelConfigService alertChannelConfigService;
     private final WebhookDeliveryService webhookDeliveryService;
     private final ObjectMapper objectMapper;
 
@@ -51,16 +54,58 @@ public class AlertNotificationService {
     }
 
     private void publishAlertChannels(AuditEventType eventType, String actor, String target, String detail) {
-        if (!ssoProperties.getModules().isAlerts() || !ssoProperties.getAlerts().isEnabled()) {
+        if (!ssoProperties.getModules().isAlerts()) {
             return;
         }
         Map<String, Object> payload = buildPayload(eventType, actor, target, detail);
+        List<AlertChannelConfigVO> dbChannels = alertChannelConfigService.listEnabled();
+        if (!dbChannels.isEmpty()) {
+            publishFromDatabase(eventType, payload, dbChannels);
+            return;
+        }
+        publishFromYaml(eventType, payload);
+    }
+
+    private void publishFromDatabase(AuditEventType eventType, Map<String, Object> payload,
+                                     List<AlertChannelConfigVO> channels) {
+        for (AlertChannelConfigVO channel : channels) {
+            if (channel == null || !StringUtils.hasText(channel.getChannelKey())) {
+                continue;
+            }
+            if (channel.getEvents() != null && !channel.getEvents().isEmpty()
+                    && !channel.getEvents().contains(eventType.getCode())) {
+                continue;
+            }
+            if (!alertChannelRegistry.hasChannel(channel.getChannelKey())) {
+                log.warn("告警通道 {} 未安装", channel.getChannelKey());
+                continue;
+            }
+            try {
+                AlertChannelAdapter adapter = alertChannelRegistry.resolve(channel.getChannelKey());
+                if (!adapter.supportsEvent(eventType.getCode())) {
+                    continue;
+                }
+                Map<String, String> config = channel.getConfig() != null ? channel.getConfig() : Map.of();
+                adapter.send(eventType.getCode(), payload, config);
+            } catch (Exception ex) {
+                log.warn("告警通道 {} 发送失败: {}", channel.getChannelKey(), ex.getMessage());
+            }
+        }
+    }
+
+    private void publishFromYaml(AuditEventType eventType, Map<String, Object> payload) {
+        if (!ssoProperties.getAlerts().isEnabled()) {
+            return;
+        }
         for (SsoProperties.Alerts.ChannelBinding binding : ssoProperties.getAlerts().getChannels()) {
             if (binding == null || !binding.isEnabled() || !StringUtils.hasText(binding.getChannelKey())) {
                 continue;
             }
             if (binding.getEvents() != null && !binding.getEvents().isEmpty()
                     && !binding.getEvents().contains(eventType.getCode())) {
+                continue;
+            }
+            if (!alertChannelRegistry.hasChannel(binding.getChannelKey())) {
                 continue;
             }
             try {

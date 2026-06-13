@@ -42,6 +42,7 @@ const router = createRouter({
         { path: 'identity-providers', name: 'identity-providers', component: () => import('@/views/IdentityProvidersView.vue'), meta: { title: '身份联邦', requiresAdmin: true } },
         { path: 'ldap-providers', name: 'ldap-providers', component: () => import('@/views/LdapProvidersView.vue'), meta: { title: 'LDAP/AD', requiresAdmin: true } },
         { path: 'modules', name: 'modules', component: () => import('@/views/ModulesView.vue'), meta: { title: '可插拔模块', requiresAdmin: true } },
+        { path: 'alert-channels', name: 'alert-channels', component: () => import('@/views/AlertChannelsView.vue'), meta: { title: '告警通道', requiresAdmin: true } },
         { path: 'webhooks', name: 'webhooks', component: () => import('@/views/WebhooksView.vue'), meta: { title: 'Webhook', requiresAdmin: true } },
         { path: 'profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { title: '个人中心' } },
       ],

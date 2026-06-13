@@ -1,8 +1,7 @@
 package cn.zest.sso.server.alert.channel;
 
-import cn.zest.sso.server.alert.spi.AlertChannelAdapter;
-import cn.zest.sso.server.alert.spi.AlertChannelDescriptor;
-import cn.zest.sso.server.config.SsoProperties;
+import cn.zest.sso.plugin.alert.AlertChannelAdapter;
+import cn.zest.sso.plugin.alert.AlertChannelDescriptor;
 import cn.zest.sso.server.service.WebhookDeliveryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HttpWebhookAlertChannel implements AlertChannelAdapter {
 
-    private final SsoProperties ssoProperties;
     private final WebhookDeliveryService webhookDeliveryService;
     private final ObjectMapper objectMapper;
 
@@ -25,11 +23,20 @@ public class HttpWebhookAlertChannel implements AlertChannelAdapter {
     }
 
     @Override
+    public String pluginName() {
+        return "HTTP Webhook";
+    }
+
+    @Override
+    public Map<String, String> configFieldHints() {
+        return Map.of("url", "目标 URL", "signingSecret", "可选 HMAC 密钥");
+    }
+
+    @Override
     public AlertChannelDescriptor descriptor() {
         return new AlertChannelDescriptor(
-                channelKey(), "HTTP Webhook", "通用 JSON Webhook（与 IAM 事件格式一致）",
-                ssoProperties.getModules().isAlerts(),
-                Map.of("url", "目标 URL", "signingSecret", "可选 HMAC 密钥"));
+                channelKey(), pluginName(), "通用 JSON Webhook（与 IAM 事件格式一致）",
+                true, configFieldHints());
     }
 
     @Override

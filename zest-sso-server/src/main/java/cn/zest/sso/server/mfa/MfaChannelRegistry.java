@@ -1,7 +1,7 @@
 package cn.zest.sso.server.mfa;
 
-import cn.zest.sso.server.mfa.spi.MfaChannelAdapter;
-import cn.zest.sso.server.mfa.spi.MfaChannelDescriptor;
+import cn.zest.sso.plugin.mfa.MfaChannelAdapter;
+import cn.zest.sso.plugin.mfa.MfaChannelDescriptor;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -25,6 +25,10 @@ public class MfaChannelRegistry {
                 .map(MfaChannelAdapter::descriptor)
                 .sorted(Comparator.comparing(MfaChannelDescriptor::key))
                 .toList();
+    }
+
+    public boolean hasChannel(String channelKey) {
+        return channelsByKey.containsKey(channelKey);
     }
 
     public MfaChannelAdapter resolve(String channelKey) {

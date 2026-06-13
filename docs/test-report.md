@@ -5,7 +5,7 @@
 | 项目 | 内容 |
 |------|------|
 | 测试版本 | 1.0.0-SNAPSHOT |
-| 测试日期 | 2026-06-13 |
+| 测试日期 | 2026-06-14 |
 | 测试环境 | JDK 17, MySQL 8（本机 `zest_sso_test`，需 `MYSQL_PASSWORD`） |
 | 测试框架 | JUnit 5, Mockito, Spring Boot Test, MockMvc |
 
@@ -17,8 +17,9 @@
 | PasswordEncoderTest | 2 | 2 | 0 | BCrypt 编解码、预置客户端密钥校验 |
 | TokenServiceTest | 4 | 4 | 0 | OIDC 元数据、Token 吊销 |
 | SamlMetadataParserTest | 2 | 2 | 0 | SAML 元数据 URL/XML 解析 |
+| PluginConfigServiceTest | 2 | 2 | 0 | 插件凭据脱敏、DB 写入 |
 
-**单元测试通过率：100%（9/9）**
+**单元测试通过率：100%（11/11）**
 
 ## 3. 集成测试
 
@@ -29,10 +30,12 @@
 | AdminIdentityProviderIT | 3 | 3 | 0 | SAML 元数据解析、SAML IdP 创建、用户组列表 |
 | ScimApiIT | 3 | 3 | 0 | SCIM ServiceProviderConfig、鉴权、client_credentials |
 | ScimBulkPatchIT | 3 | 3 | 0 | SCIM PATCH 停用用户、Bulk 创建/删除、Bulk 能力声明 |
+| AdminPluggableModulesIT | 7 | 7 | 0 | 插件/告警通道/MFA 描述符 Admin API、静态 `/admin/` |
+| AlertNotificationServiceIT | 2 | 2 | 0 | DB 告警通道优先、事件订阅过滤 |
 
 | 场景 | 状态 | 说明 |
 |------|------|------|
-| Flyway 数据库迁移 | 通过 | MySQL 执行 V1–V8 脚本 |
+| Flyway 数据库迁移 | 通过 | MySQL 执行 V1–V16 脚本 |
 | Spring Authorization Server 初始化 | 通过 | 多 SecurityFilterChain（OIDC / SCIM / Web）正常加载 |
 | OAuth 客户端数据库加载 | 通过 | zestflow-admin / zest-llm-admin / scim-provisioner |
 | SAML 2.0 SP 联邦 | 通过 | RelyingPartyRegistrations + 元数据导入 API |
@@ -40,9 +43,9 @@
 | Redis Mock 集成 | 通过 | TestRedisConfig 替代真实 Redis |
 | OIDC end_session_endpoint | 通过 | `/connect/logout` 暴露在 Discovery |
 
-**集成测试通过率：100%（16/16）**
+**集成测试通过率：100%（25/25）**
 
-**总测试通过率：单元测试 8/8（默认 `mvn test`）；集成测试需 `-Pmysql-it` + `MYSQL_PASSWORD`**
+**总测试通过率：55/55 全部通过（`mvn test -Pmysql-it` + `MYSQL_PASSWORD=123456`）**
 
 ## 4. 安全测试
 

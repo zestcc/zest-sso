@@ -379,8 +379,9 @@ export interface MfaChannelInfo {
   key: string
   name: string
   description: string
+  installed: boolean
   enabled: boolean
-  productionReady: boolean
+  configured: boolean
   configHints: Record<string, string>
 }
 
@@ -388,8 +389,28 @@ export interface AlertChannelInfo {
   key: string
   name: string
   description: string
-  enabled: boolean
+  installed: boolean
   configHints: Record<string, string>
+}
+
+export interface PluginConfigInfo {
+  pluginKey: string
+  pluginName: string
+  category: string
+  installed: boolean
+  enabled: boolean
+  configured: boolean
+  configHints: Record<string, string>
+  config: Record<string, string>
+}
+
+export interface AlertChannelConfigInfo {
+  id?: number
+  name: string
+  channelKey: string
+  enabled?: number
+  events?: string[]
+  config?: Record<string, string>
 }
 
 export interface WebhookDeliveryInfo {

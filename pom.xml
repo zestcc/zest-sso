@@ -14,8 +14,11 @@
 
     <modules>
         <module>zest-sso-common</module>
+        <module>zest-sso-plugin-api</module>
         <module>zest-sso-server</module>
         <module>zest-sso-client-sdk</module>
+        <module>zest-sso-plugin-aliyun-sms</module>
+        <module>zest-sso-plugin-tencent-sms</module>
     </modules>
 
     <properties>
@@ -88,6 +91,37 @@
                 <groupId>com.webauthn4j</groupId>
                 <artifactId>webauthn4j-core</artifactId>
                 <version>${webauthn4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.zest.sso</groupId>
+                <artifactId>zest-sso-plugin-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.zest.sso</groupId>
+                <artifactId>zest-sso-plugin-aliyun-sms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.zest.sso</groupId>
+                <artifactId>zest-sso-plugin-tencent-sms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>dysmsapi20170525</artifactId>
+                <version>3.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tencentcloudapi</groupId>
+                <artifactId>tencentcloud-sdk-java-sms</artifactId>
+                <version>3.1.1281</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tencentcloudapi</groupId>
+                <artifactId>tencentcloud-sdk-java-common</artifactId>
+                <version>3.1.1281</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
