@@ -24,6 +24,9 @@ if (-not (Test-Path $templateFile)) { throw "Template not found: $templateFile" 
 $body = Get-Content $templateFile -Raw | ConvertFrom-Json
 $body.clientId = $ClientId
 $body.clientSecret = $ClientSecret
+if (-not $body.adapterKey) {
+    $body | Add-Member -NotePropertyName adapterKey -NotePropertyValue $Template -Force
+}
 if ($body._comment) { $body.PSObject.Properties.Remove('_comment') }
 
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession

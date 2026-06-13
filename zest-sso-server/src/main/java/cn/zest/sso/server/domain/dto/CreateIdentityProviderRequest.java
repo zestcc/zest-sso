@@ -1,5 +1,6 @@
 package cn.zest.sso.server.domain.dto;
 
+import cn.zest.sso.server.federation.spi.FederatedIdpEndpointConfig;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -17,10 +18,14 @@ public class CreateIdentityProviderRequest {
     @Pattern(regexp = "^(OIDC|SAML)$", message = "providerType 仅支持 OIDC 或 SAML")
     private String providerType;
 
+    /** 插拔适配器：generic-oidc / feishu / dingtalk / wecom */
+    private String adapterKey;
+
     private String discoveryUri;
     private String clientId;
     private String clientSecret;
     private String scopes;
+    private FederatedIdpEndpointConfig endpointConfig;
     private String usernameClaim;
     private String emailClaim;
     private String displayNameClaim;

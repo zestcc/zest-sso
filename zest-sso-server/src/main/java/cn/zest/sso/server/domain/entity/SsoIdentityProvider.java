@@ -17,6 +17,8 @@ public class SsoIdentityProvider {
     private String alias;
     private String displayName;
     private String providerType;
+    private String adapterKey;
+    private String endpointConfig;
     private String discoveryUri;
     private String clientId;
     private String clientSecret;

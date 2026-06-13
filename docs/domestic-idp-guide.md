@@ -3,13 +3,43 @@
 ZestSSO 作为 **OIDC IdP** 的同时，支持将外部 IdP 配置为**联邦登录源**（登录页展示「使用 xxx 登录」按钮）。  
 配置入口：Admin 控制台 → 身份源，或 `POST /api/admin/identity-providers`。
 
+## 插拔式适配器（SPI）
+
+国内 IdP 通过 **`adapterKey`** 选择内置适配器，无需改代码即可切换平台：
+
+| adapterKey | 名称 | 生产就绪 | 说明 |
+|------------|------|----------|------|
+| `generic-oidc` | 通用 OIDC | ✅ | 任意有 Discovery 的 IdP |
+| `feishu` | 飞书 | ✅ | 自动填充飞书 Discovery 与 Claims |
+| `dingtalk` | 钉钉 | ✅ | Discovery 或 `endpoint_config` 手动端点 |
+| `wecom` | 企业微信 | ⚠️ 预览 | 预置授权端点，完整换票见阶段 B |
+
+查询可用适配器：
+
+```http
+GET /api/admin/identity-providers/adapters
+```
+
+创建身份源时在 JSON 中指定 `adapterKey`；钉钉/企微无 Discovery 时可传 `endpointConfig`：
+
+```json
+{
+  "endpointConfig": {
+    "authorizationUri": "https://login.dingtalk.com/oauth2/auth",
+    "tokenUri": "https://api.dingtalk.com/v1.0/oauth2/userAccessToken"
+  }
+}
+```
+
+新增平台适配器：实现 `FederatedIdpAdapter` 并注册为 Spring `@Component`，`FederatedIdpAdapterRegistry` 会自动发现。
+
 ## 能力矩阵
 
 | 平台 | 推荐方式 | ZestSSO 现状 | 说明 |
 |------|----------|--------------|------|
-| **飞书** | OIDC 联邦 | ✅ 推荐 | 提供 OpenID Discovery，与现有 `OIDC` 身份源完全兼容 |
-| **钉钉** | OIDC 联邦（有 Discovery 时） | ⚠️ 视开放平台版本 | 部分租户需使用扫码 OAuth2，见下文「限制」 |
-| **企业微信** | LDAP 同步 + 本地登录 / SAML | ⚠️ 无标准 OIDC Discovery | 企业微信 OAuth2 非标准 OIDC，建议 LDAP 或等待阶段 B |
+| **飞书** | OIDC 联邦 | ✅ 推荐 | `adapterKey=feishu`，自动 Discovery |
+| **钉钉** | OIDC 联邦（有 Discovery 时） | ✅ `adapterKey=dingtalk` | 无 Discovery 时用 `endpoint_config` |
+| **企业微信** | LDAP 同步 + 本地登录 / SAML | ⚠️ `adapterKey=wecom` 预览 | 企微 OAuth2 非标准 OIDC，完整换票待阶段 B |
 | **AD/LDAP** | LDAP 联邦 | ✅ 已支持 | Admin → LDAP 提供方 |
 
 ## 一、飞书（推荐，步骤最少）
@@ -67,6 +97,7 @@ powershell -File scripts/register-idp-template.ps1 `
   "alias": "dingtalk",
   "displayName": "钉钉登录",
   "providerType": "OIDC",
+  "adapterKey": "dingtalk",
   "discoveryUri": "https://login.dingtalk.com/oauth2/.well-known/openid-configuration",
   "clientId": "<AppKey>",
   "clientSecret": "<AppSecret>",
@@ -114,6 +145,6 @@ powershell -File scripts/register-idp-template.ps1 `
 
 ## 六、后续（阶段 B）
 
-- 钉钉/企微 **无 Discovery** 场景的 `manualEndpoints` 配置
-- Admin 向导：选择平台 → 自动填充 Discovery / 回调 URL
+- 企微 **自定义 TokenResponseClient**（非标准换票）
+- Admin 向导：从 `/adapters` 选择平台 → 自动填充 Discovery / 回调 URL
 - 扫码登录 UI 组件

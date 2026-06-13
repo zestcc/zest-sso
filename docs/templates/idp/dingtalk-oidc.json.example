@@ -2,6 +2,7 @@
   "alias": "dingtalk",
   "displayName": "钉钉登录",
   "providerType": "OIDC",
+  "adapterKey": "dingtalk",
   "discoveryUri": "https://login.dingtalk.com/oauth2/.well-known/openid-configuration",
   "clientId": "REPLACE_WITH_DINGTALK_APP_KEY",
   "clientSecret": "REPLACE_WITH_DINGTALK_APP_SECRET",

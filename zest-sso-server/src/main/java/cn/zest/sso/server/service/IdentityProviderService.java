@@ -10,9 +10,14 @@ import cn.zest.sso.server.domain.entity.SsoIdentityProvider;
 import cn.zest.sso.server.domain.mapper.SsoIdentityProviderMapper;
 import cn.zest.sso.server.domain.vo.IdentityProviderVO;
 import cn.zest.sso.server.domain.vo.SamlMetadataVO;
+import cn.zest.sso.server.federation.FederatedIdpAdapterRegistry;
+import cn.zest.sso.server.federation.spi.FederatedIdpAdapter;
+import cn.zest.sso.server.federation.spi.FederatedIdpAdapterDescriptor;
+import cn.zest.sso.server.federation.spi.FederatedIdpEndpointConfig;
 import cn.zest.sso.server.support.AdminAuditSupport;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,12 @@ public class IdentityProviderService {
     private final AdminAuditSupport auditSupport;
     private final SsoProperties ssoProperties;
     private final SamlMetadataParserService samlMetadataParserService;
+    private final FederatedIdpAdapterRegistry adapterRegistry;
+    private final ObjectMapper objectMapper;
+
+    public List<FederatedIdpAdapterDescriptor> listAdapters() {
+        return adapterRegistry.listDescriptors();
+    }
 
     public Page<IdentityProviderVO> pageProviders(int page, int size) {
         Page<SsoIdentityProvider> providerPage = identityProviderMapper.selectPage(
@@ -72,14 +83,21 @@ public class IdentityProviderService {
         applyClaimMapping(provider, request.getUsernameClaim(), request.getEmailClaim(),
                 request.getDisplayNameClaim(), request.getRoleClaim(), request.getDefaultRoleCodes());
         if ("SAML".equals(providerType)) {
+            provider.setAdapterKey("saml");
             applySamlFields(provider, request.getSamlMetadataUri(), request.getSamlEntityId(),
                     request.getSamlSsoUrl(), request.getSamlVerificationCertificate());
             provider.setScopes("saml");
         } else {
+            String adapterKey = StringUtils.hasText(request.getAdapterKey())
+                    ? request.getAdapterKey() : "generic-oidc";
+            provider.setAdapterKey(adapterKey);
             provider.setDiscoveryUri(request.getDiscoveryUri());
             provider.setClientId(request.getClientId());
             provider.setClientSecret(request.getClientSecret());
-            provider.setScopes(request.getScopes() != null ? request.getScopes() : "openid,profile,email");
+            provider.setScopes(request.getScopes());
+            provider.setEndpointConfig(serializeEndpointConfig(request.getEndpointConfig()));
+            FederatedIdpAdapter adapter = adapterRegistry.resolve(provider);
+            adapter.applyDefaults(provider);
         }
         provider.setEnabled(1);
         identityProviderMapper.insert(provider);
@@ -108,6 +126,9 @@ public class IdentityProviderService {
                 }
             }
         } else {
+            if (request.getAdapterKey() != null) {
+                provider.setAdapterKey(request.getAdapterKey());
+            }
             if (request.getDiscoveryUri() != null) {
                 provider.setDiscoveryUri(request.getDiscoveryUri());
             }
@@ -119,6 +140,9 @@ public class IdentityProviderService {
             }
             if (request.getScopes() != null) {
                 provider.setScopes(request.getScopes());
+            }
+            if (request.getEndpointConfig() != null) {
+                provider.setEndpointConfig(serializeEndpointConfig(request.getEndpointConfig()));
             }
         }
         applyClaimMapping(provider, request.getUsernameClaim(), request.getEmailClaim(),
@@ -172,14 +196,32 @@ public class IdentityProviderService {
             }
             return;
         }
-        if (!StringUtils.hasText(request.getDiscoveryUri())) {
-            throw new SsoException(ErrorCode.BAD_REQUEST, "Discovery URI 不能为空");
+        SsoIdentityProvider preview = previewOidcProvider(request);
+        FederatedIdpAdapter adapter = adapterRegistry.resolve(preview);
+        adapter.validateCreate(request, preview);
+    }
+
+    private SsoIdentityProvider previewOidcProvider(CreateIdentityProviderRequest request) {
+        SsoIdentityProvider preview = new SsoIdentityProvider();
+        preview.setProviderType("OIDC");
+        preview.setAdapterKey(StringUtils.hasText(request.getAdapterKey()) ? request.getAdapterKey() : "generic-oidc");
+        preview.setDiscoveryUri(request.getDiscoveryUri());
+        preview.setClientId(request.getClientId());
+        preview.setClientSecret(request.getClientSecret());
+        preview.setScopes(request.getScopes());
+        preview.setEndpointConfig(serializeEndpointConfig(request.getEndpointConfig()));
+        adapterRegistry.resolve(preview).applyDefaults(preview);
+        return preview;
+    }
+
+    private String serializeEndpointConfig(FederatedIdpEndpointConfig config) {
+        if (config == null) {
+            return null;
         }
-        if (!StringUtils.hasText(request.getClientId())) {
-            throw new SsoException(ErrorCode.BAD_REQUEST, "Client ID 不能为空");
-        }
-        if (!StringUtils.hasText(request.getClientSecret())) {
-            throw new SsoException(ErrorCode.BAD_REQUEST, "Client Secret 不能为空");
+        try {
+            return objectMapper.writeValueAsString(config);
+        } catch (Exception e) {
+            throw new SsoException(ErrorCode.BAD_REQUEST, "endpoint_config 序列化失败");
         }
     }
 
@@ -208,6 +250,7 @@ public class IdentityProviderService {
                 .alias(provider.getAlias())
                 .displayName(provider.getDisplayName())
                 .providerType(provider.getProviderType())
+                .adapterKey(provider.getAdapterKey())
                 .discoveryUri(provider.getDiscoveryUri())
                 .clientId(provider.getClientId())
                 .scopes(provider.getScopes())

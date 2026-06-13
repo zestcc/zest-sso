@@ -11,6 +11,7 @@ public class IdentityProviderVO {
     private String alias;
     private String displayName;
     private String providerType;
+    private String adapterKey;
     private String discoveryUri;
     private String clientId;
     private String scopes;

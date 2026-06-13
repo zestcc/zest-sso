@@ -7,6 +7,7 @@ import cn.zest.sso.server.domain.dto.ParseSamlMetadataRequest;
 import cn.zest.sso.server.domain.dto.UpdateIdentityProviderRequest;
 import cn.zest.sso.server.domain.vo.IdentityProviderVO;
 import cn.zest.sso.server.domain.vo.SamlMetadataVO;
+import cn.zest.sso.server.federation.spi.FederatedIdpAdapterDescriptor;
 import cn.zest.sso.server.service.IdentityProviderService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.validation.Valid;
@@ -29,6 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminIdentityProviderController {
 
     private final IdentityProviderService identityProviderService;
+
+    @GetMapping("/adapters")
+    public ApiResponse<java.util.List<FederatedIdpAdapterDescriptor>> listAdapters() {
+        return ApiResponse.success(identityProviderService.listAdapters());
+    }
 
     @GetMapping
     public ApiResponse<PageResult<IdentityProviderVO>> list(

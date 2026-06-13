@@ -66,6 +66,38 @@ class AdminIdentityProviderIT {
     }
 
     @Test
+    void shouldListFederationAdapters() throws Exception {
+        mockMvc.perform(get("/api/admin/identity-providers/adapters")
+                        .with(user("admin").roles("SSO_ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data[?(@.key=='feishu')]").exists())
+                .andExpect(jsonPath("$.data[?(@.key=='dingtalk')]").exists());
+    }
+
+    @Test
+    void shouldCreateFeishuIdentityProviderWithAdapterKey() throws Exception {
+        String alias = "feishu-" + System.currentTimeMillis();
+        mockMvc.perform(post("/api/admin/identity-providers")
+                        .with(user("admin").roles("SSO_ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "alias": "%s",
+                                  "displayName": "飞书登录",
+                                  "providerType": "OIDC",
+                                  "adapterKey": "feishu",
+                                  "clientId": "cli_test",
+                                  "clientSecret": "secret_test"
+                                }
+                                """.formatted(alias)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.adapterKey").value("feishu"))
+                .andExpect(jsonPath("$.data.discoveryUri", containsString("feishu.cn")))
+                .andExpect(jsonPath("$.data.loginUrl", containsString("/oauth2/authorization/" + alias)));
+    }
+
+    @Test
     void shouldListGroupsForAdmin() throws Exception {
         mockMvc.perform(get("/api/admin/groups")
                         .with(user("admin").roles("SSO_ADMIN"))
