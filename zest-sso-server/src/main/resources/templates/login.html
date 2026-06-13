@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title th:text="${loginTitle} + ' 登录'">ZestSSO 登录</title>
+
+    <style>
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+        .login-card {
+
+            background: #fff;
+
+            border-radius: 12px;
+
+            padding: 40px;
+
+            width: 400px;
+
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+
+        }
+
+        .logo { text-align: center; margin-bottom: 32px; }
+
+        .logo h1 { font-size: 28px; color: #333; }
+
+        .logo p { color: #888; margin-top: 8px; font-size: 14px; }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-group label { display: block; margin-bottom: 6px; color: #555; font-size: 14px; }
+
+        .form-group input {
+
+            width: 100%;
+
+            padding: 12px 16px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+
+            transition: border-color 0.2s;
+
+        }
+
+        .form-group input:focus { outline: none; border-color: #667eea; }
+
+        .btn-login {
+
+            width: 100%;
+
+            padding: 14px;
+
+            background: linear-gradient(135deg, #667eea, #764ba2);
+
+            color: #fff;
+
+            border: none;
+
+            border-radius: 8px;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            transition: opacity 0.2s;
+
+        }
+
+        .btn-login:hover { opacity: 0.9; }
+
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+
+        .alert-error { background: #fee; color: #c33; border: 1px solid #fcc; }
+
+        .alert-info { background: #e8f4fd; color: #1890ff; border: 1px solid #bae7ff; }
+
+        .divider { display: flex; align-items: center; margin: 24px 0; color: #999; font-size: 13px; }
+
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
+
+        .divider span { padding: 0 12px; }
+
+        .idp-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .btn-idp {
+
+            display: block;
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            background: #fafafa;
+
+            color: #333;
+
+            font-size: 14px;
+
+            text-align: center;
+
+            text-decoration: none;
+
+            transition: border-color 0.2s, background 0.2s;
+
+        }
+
+        .btn-idp:hover { border-color: #667eea; background: #f5f7ff; }
+
+        .mfa-hint { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <div class="logo">
+
+        <h1 th:text="${loginTitle}">ZestSSO</h1>
+        <p th:if="${mfaStep}">多因素身份验证</p>
+        <p th:unless="${mfaStep}" th:text="${loginSubtitle}">统一身份认证</p>
+
+    </div>
+
+
+
+    <div th:if="${param.error}" class="alert alert-error">
+
+        用户名或密码错误，请重试
+
+    </div>
+
+    <div th:if="${mfaError}" class="alert alert-error">
+
+        验证码无效或已过期，请重试
+
+    </div>
+
+    <div th:if="${param.logout}" class="alert alert-info">
+
+        您已成功登出
+
+    </div>
+
+
+
+    <div th:if="${mfaStep}">
+
+        <p class="mfa-hint">请输入身份验证器（Google Authenticator 等）中的 6 位验证码以完成登录。</p>
+
+        <form th:action="@{/login/mfa}" method="post">
+
+            <input type="hidden" name="token" th:value="${mfaToken}">
+
+            <div class="form-group">
+
+                <label for="code">验证码</label>
+
+                <input type="text" id="code" name="code" required autofocus
+
+                       maxlength="6" pattern="[0-9]{6}" placeholder="6 位数字验证码">
+
+            </div>
+
+            <button type="submit" class="btn-login">验 证</button>
+
+        </form>
+
+        <div style="margin-top: 16px; text-align: center;">
+
+            <a href="/login" style="color: #667eea; font-size: 14px; text-decoration: none;">返回重新登录</a>
+
+        </div>
+
+    </div>
+
+
+
+    <div th:unless="${mfaStep}">
+
+        <form th:action="@{/login}" method="post">
+
+            <div class="form-group">
+
+                <label for="username">用户名</label>
+
+                <input type="text" id="username" name="username" required autofocus
+
+                       placeholder="请输入用户名">
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="password">密码</label>
+
+                <input type="password" id="password" name="password" required
+
+                       placeholder="请输入密码">
+
+            </div>
+
+            <button type="submit" class="btn-login">登 录</button>
+
+        </form>
+
+        <button type="button" class="btn-login" id="passkeyBtn" style="margin-top: 12px; background: #fff; color: #667eea; border: 1px solid #667eea;">
+            使用 Passkey 登录
+        </button>
+
+        <div style="margin-top: 12px; text-align: center;">
+            <a href="/forgot-password" style="color: #667eea; font-size: 14px; text-decoration: none;">忘记密码？</a>
+        </div>
+
+
+
+        <div th:if="${identityProviders != null and !identityProviders.isEmpty()}">
+
+            <div class="divider"><span>或使用外部身份源</span></div>
+
+            <div class="idp-list">
+
+                <a th:each="idp : ${identityProviders}"
+
+                   th:href="${idp.loginUrl}"
+
+                   class="btn-idp"
+
+                   th:text="'通过 ' + ${idp.displayName} + ' 登录'">外部登录</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+(function() {
+    function bufferFromBase64Url(value) {
+        const padding = '='.repeat((4 - value.length % 4) % 4);
+        const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw = atob(base64);
+        const buffer = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) buffer[i] = raw.charCodeAt(i);
+        return buffer.buffer;
+    }
+    function parseRequestOptions(options) {
+        const copy = Object.assign({}, options);
+        copy.challenge = bufferFromBase64Url(copy.challenge);
+        if (copy.allowCredentials) {
+            copy.allowCredentials = copy.allowCredentials.map(function(c) {
+                return Object.assign({}, c, { id: bufferFromBase64Url(c.id) });
+            });
+        }
+        return copy;
+    }
+    function credentialToJson(credential) {
+        const response = credential.response;
+        function encode(buf) {
+            return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+        return {
+            id: credential.id,
+            rawId: encode(credential.rawId),
+            type: credential.type,
+            response: {
+                authenticatorData: encode(response.authenticatorData),
+                clientDataJSON: encode(response.clientDataJSON),
+                signature: encode(response.signature)
+            }
+        };
+    }
+    const btn = document.getElementById('passkeyBtn');
+    if (!btn || !window.PublicKeyCredential) {
+        if (btn) btn.style.display = 'none';
+        return;
+    }
+    btn.addEventListener('click', async function() {
+        btn.disabled = true;
+        try {
+            const usernameInput = document.getElementById('username');
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const optRes = await fetch('/api/public/webauthn/login/options', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(username ? { username: username } : {})
+            });
+            const optData = await optRes.json();
+            if (optData.code !== 0) throw new Error(optData.message || '获取 Passkey 选项失败');
+            const publicKey = parseRequestOptions(optData.data.publicKey);
+            const credential = await navigator.credentials.get({ publicKey: publicKey });
+            const finishRes = await fetch('/api/public/webauthn/login/finish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    sessionToken: optData.data.sessionToken,
+                    credential: credentialToJson(credential)
+                })
+            });
+            const finishData = await finishRes.json();
+            if (finishData.code !== 0) throw new Error(finishData.message || 'Passkey 登录失败');
+            window.location.href = finishData.data.redirectUrl;
+        } catch (e) {
+            alert(e.message || 'Passkey 登录失败');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+</script>
+
+</body>
+
+</html>
+

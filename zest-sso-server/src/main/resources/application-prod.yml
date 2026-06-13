@@ -1,0 +1,15 @@
+spring:
+  thymeleaf:
+    cache: true
+
+zest:
+  sso:
+    bootstrap:
+      reset-default-password: false
+    security:
+      cors-allowed-origins: https://sso.zest.wang
+
+logging:
+  level:
+    cn.zest.sso: INFO
+    org.springframework.security: WARN

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.example.com/metadata">
+  <md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDATCCAemgAwIBAgIIFZ1evA7XwzMwDQYJKoZIhvcNAQELBQAwLzELMAkGA1UEBhMCQ04xDTALBgNVBAoTBFplc3QxETAPBgNVBAMTCFRlc3QgSWRQMB4XDTI2MDYxMzA2MDE0NVoXDTM2MDYxMDA2MDE0NVowLzELMAkGA1UEBhMCQ04xDTALBgNVBAoTBFplc3QxETAPBgNVBAMTCFRlc3QgSWRQMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApIidJRXFzBVXoYLktj4d6hyQa3u5s5C6Mit9RmmcjuJ3hCiJZh1TOAsJ8FCSsV4u5myivgWPCJPvmV7aOFcmNR5me5JzdX7UQ/u1d71J2eJvfm7nRetUV0d6YT9PtNflGtZ57gfwxHd2OEr0eeR1BTpxLtT4fq2hxKgPV1SDSTYNPQ4THHeoauM5uQyF6SctVl773vOq93x7hCrdZbpY42mZTUS5nL2RTbLU2ULRNmkZAitzaWMUBZ3HZDy6NY5CeYd57gjfRDzySCzTb40tGuY9n9Xfge/qbeY3gyQPsUJr5ELWkOFqCtn2lMPxYg9vHaH+eiE9QuK/BbCpIS+ImwIDAQABoyEwHzAdBgNVHQ4EFgQU7Ej7AaYcDNdeWsks6vkjLx5xLC0wDQYJKoZIhvcNAQELBQADggEBABH2rvxVbtHUWQkncjVTBr9VbpvkH0wX5ezVlqXaqOSYzQXpN1K3VmGXahKmlYT4iyCRFbL3nULuKa0OztptydPiww60ZKzaqr3TcB7pCYGNxFATLKoF+OMEXvyGxaF+QWRPi2mwyzrhrBdXhKHy1vf8oaX6U+14QQ3r9HXIXjZn093wMCDFuLtMV2Ok83dqGd4EbzqPZK7XAJxWnNgsXCg2fwwEzQS2mv8F4GmL6gTlu8RhTs1vpBQ9Q74lbL7hobUeHqgc3acidctw6Jl/fDLWfHKsZUcH1qzW+KgtKrExdvoGN/KHcpEqTo6D9oAkbib4z03I8oJgVDf3rq3asr0=</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.example.com/sso/saml"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>

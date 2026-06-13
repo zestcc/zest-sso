@@ -1,0 +1,139 @@
+package cn.zest.sso.server.config;
+
+import cn.zest.sso.server.handler.AdminSecurityHandlers;
+import cn.zest.sso.server.security.FormLoginMfaSuccessHandler;
+import cn.zest.sso.server.security.FederatedLoginSuccessHandler;
+import cn.zest.sso.server.security.LoginRateLimitFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private static final RequestMatcher AUTHORIZATION_SERVER_ENDPOINTS = new OrRequestMatcher(
+            new AntPathRequestMatcher("/oauth2/authorize"),
+            new AntPathRequestMatcher("/oauth2/token"),
+            new AntPathRequestMatcher("/oauth2/introspect"),
+            new AntPathRequestMatcher("/oauth2/revoke"),
+            new AntPathRequestMatcher("/oauth2/device_authorization"),
+            new AntPathRequestMatcher("/oauth2/device_verification"),
+            new AntPathRequestMatcher("/oauth2/jwks"),
+            new AntPathRequestMatcher("/oauth2/consent"),
+            new AntPathRequestMatcher("/userinfo"),
+            new AntPathRequestMatcher("/connect/logout"),
+            new AntPathRequestMatcher("/.well-known/openid-configuration")
+    );
+
+    private final SsoProperties ssoProperties;
+    private final LoginRateLimitFilter loginRateLimitFilter;
+    private final AdminSecurityHandlers adminSecurityHandlers;
+    private final FederatedLoginSuccessHandler federatedLoginSuccessHandler;
+    private final FormLoginMfaSuccessHandler formLoginMfaSuccessHandler;
+
+    public SecurityConfig(SsoProperties ssoProperties,
+                          LoginRateLimitFilter loginRateLimitFilter,
+                          AdminSecurityHandlers adminSecurityHandlers,
+                          FederatedLoginSuccessHandler federatedLoginSuccessHandler,
+                          @Lazy FormLoginMfaSuccessHandler formLoginMfaSuccessHandler) {
+        this.ssoProperties = ssoProperties;
+        this.loginRateLimitFilter = loginRateLimitFilter;
+        this.adminSecurityHandlers = adminSecurityHandlers;
+        this.federatedLoginSuccessHandler = federatedLoginSuccessHandler;
+        this.formLoginMfaSuccessHandler = formLoginMfaSuccessHandler;
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher(new NegatedRequestMatcher(AUTHORIZATION_SERVER_ENDPOINTS))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/login", "/login/mfa", "/logout", "/connect/logout", "/logout/oidc",
+                                "/forgot-password", "/reset-password",
+                                "/api/public/password/**",
+                                "/api/public/webauthn/**",
+                                "/login/oauth2/**",
+                                "/saml2/**", "/login/saml2/**",
+                                "/css/**", "/js/**", "/images/**", "/admin/**",
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/actuator/health",
+                                "/api/public/**",
+                                "/api/admin/auth/login",
+                                "/api/admin/auth/mfa/verify"
+                        ).permitAll()
+                        .requestMatchers("/api/admin/**").hasAnyRole("SSO_ADMIN", "SSO_OPERATOR", "TENANT_ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(adminSecurityHandlers)
+                        .accessDeniedHandler(adminSecurityHandlers))
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .successHandler(federatedLoginSuccessHandler))
+                .saml2Login(saml2 -> saml2
+                        .loginPage("/login")
+                        .successHandler(federatedLoginSuccessHandler))
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler(formLoginMfaSuccessHandler)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                )
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(ssoProperties.getSecurity().getCorsAllowedOrigins());
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}

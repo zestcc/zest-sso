@@ -1,0 +1,8 @@
+[project]
+name = "zest-sso-client"
+version = "1.0.0"
+description = "ZestSSO OIDC client SDK for Python"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+py-modules = ["zest_sso_client"]
