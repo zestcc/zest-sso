@@ -26,7 +26,7 @@ try {
     Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/public/test/backchannel/clear" -TimeoutSec 5 | Out-Null
     Pass "test-receiver-enabled"
 } catch {
-    Fail "test-receiver-enabled" "测试 RP 未启用，请使用 dev profile 并设置 zest.sso.test.backchannel-receiver-enabled=true"
+    Fail "test-receiver-enabled" "test RP disabled; use dev profile with zest.sso.test.backchannel-receiver-enabled=true"
 }
 
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
@@ -55,7 +55,7 @@ try {
     if ($last.code -eq 0 -and $last.data.received -eq $true -and $last.data.principalName -eq "admin") {
         Pass "rp-received-logout-token"
     } else {
-        Fail "rp-received-logout-token" "未收到 logout_token"
+        Fail "rp-received-logout-token" "logout_token not received"
     }
 } catch { Fail "rp-received-logout-token" $_.Exception.Message }
 
@@ -67,7 +67,7 @@ try {
     $deliveries = Invoke-RestMethod -Uri "$BaseUrl/api/admin/logout-deliveries?principalName=admin&page=1&size=5" `
         -WebSession $session2 -TimeoutSec 5
     $ok = $deliveries.data.records | Where-Object { $_.clientId -eq $TestClientId -and $_.status -eq "SUCCESS" } | Select-Object -First 1
-    if ($ok) { Pass "delivery-record-success" } else { Fail "delivery-record-success" "无 SUCCESS 投递记录" }
+    if ($ok) { Pass "delivery-record-success" } else { Fail "delivery-record-success" "no SUCCESS delivery record" }
 } catch { Fail "delivery-record-success" $_.Exception.Message }
 
 Write-Host ""
