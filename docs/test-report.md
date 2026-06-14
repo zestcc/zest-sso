@@ -4,7 +4,7 @@
 
 | 项目 | 内容 |
 |------|------|
-| 测试版本 | 1.0.0-SNAPSHOT |
+| 测试版本 | 1.0.0 |
 | 测试日期 | 2026-06-14 |
 | 测试环境 | JDK 17, MySQL 8（本机 `zest_sso_test`，需 `MYSQL_PASSWORD`） |
 | 测试框架 | JUnit 5, Mockito, Spring Boot Test, MockMvc |
@@ -129,4 +129,4 @@ mvn -pl zest-sso-server -am test -DfailIfNoTests=false
 
 ## 9. 结论
 
-ZestSSO v1.0.0-SNAPSHOT 单元与集成测试全部通过（25/25）。OIDC 公开端点、Admin 认证、SAML 元数据导入、SCIM PATCH/Bulk、JWKS、单点登出 URL 构建均正常。建议在 Docker 完整环境下完成浏览器 E2E 联调与压测后发布生产版本。
+ZestSSO v1.0.0 单元与集成测试全部通过（25/25）。OIDC 公开端点、Admin 认证、SAML 元数据导入、SCIM PATCH/Bulk、JWKS、单点登出 URL 构建均正常。建议在 Docker 完整环境下完成浏览器 E2E 联调与压测后发布生产版本。

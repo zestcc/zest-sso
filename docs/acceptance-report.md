@@ -2,7 +2,7 @@
 
 | 项目 | 内容 |
 |------|------|
-| 版本 | 1.0.0-SNAPSHOT |
+| 版本 | 1.0.0 |
 | 开始时间 | 2026-06-14 19:20:20 |
 | 结束时间 | 2026-06-14 19:22:49 |
 | 耗时 | 2.5 分钟 |
@@ -78,4 +78,4 @@
 
 ## 7. 结论
 
-PASS: ZestSSO v1.0.0-SNAPSHOT production acceptance completed.
+PASS: ZestSSO v1.0.0 production acceptance completed.
