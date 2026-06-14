@@ -44,7 +44,7 @@ public class OidcLogoutController {
                 : List.of();
 
         if (StringUtils.hasText(principal)) {
-            logoutService.revokePrincipalAccess(principal);
+            logoutService.revokeOAuthAccess(principal);
         }
         logoutService.finishHttpLogout(request, response);
 

@@ -16,6 +16,8 @@ import java.io.IOException;
 @Configuration
 public class AdminWebConfig implements WebMvcConfigurer {
 
+    private static final String ADMIN_INDEX = "/static/admin/index.html";
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/admin/**")
@@ -24,15 +26,22 @@ public class AdminWebConfig implements WebMvcConfigurer {
                 .addResolver(new PathResourceResolver() {
                     @Override
                     protected Resource getResource(String resourcePath, Resource location) throws IOException {
-                        if (!StringUtils.hasText(resourcePath) || resourcePath.endsWith("/")) {
-                            return new ClassPathResource("/static/admin/index.html");
+                        if (shouldFallbackToIndex(resourcePath)) {
+                            return new ClassPathResource(ADMIN_INDEX);
                         }
                         Resource requested = location.createRelative(resourcePath);
-                        if (requested.exists() && requested.isReadable()) {
+                        if (requested.exists() && requested.isReadable() && requested.isFile()) {
                             return requested;
                         }
-                        return new ClassPathResource("/static/admin/index.html");
+                        return new ClassPathResource(ADMIN_INDEX);
                     }
                 });
+    }
+
+    private static boolean shouldFallbackToIndex(String resourcePath) {
+        return !StringUtils.hasText(resourcePath)
+                || ".".equals(resourcePath)
+                || resourcePath.endsWith("/")
+                || !resourcePath.contains(".");
     }
 }

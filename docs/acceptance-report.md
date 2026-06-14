@@ -1,70 +1,81 @@
-﻿# ZestSSO 鐢熶骇绾ч獙鏀舵姤鍛?
-| 椤圭洰 | 鍐呭 |
+﻿# ZestSSO 生产级验收报告
+
+| 项目 | 内容 |
 |------|------|
-| 鐗堟湰 | 1.0.0-SNAPSHOT |
-| 寮€濮嬫椂闂?| 2026-06-14 01:14:59 |
-| 缁撴潫鏃堕棿 | 2026-06-14 01:17:16 |
-| 鑰楁椂 | 2.3 鍒嗛挓 |
-| 鐜 | JDK 17, MySQL 8, Redis 7, Windows 鏈湴 |
-| 鏈嶅姟鍦板潃 | http://localhost:9000 |
-| **楠屾敹缁撹** | **閫氳繃 (PASS)** |
+| 版本 | 1.0.0-SNAPSHOT |
+| 开始时间 | 2026-06-14 19:20:20 |
+| 结束时间 | 2026-06-14 19:22:49 |
+| 耗时 | 2.5 分钟 |
+| 环境 | JDK 17, MySQL 8, Redis 7, Windows 本地 |
+| 服务地址 | http://localhost:9000 |
+| **验收结论** | **通过 (PASS)** |
 
-## 1. 鐧界洅娴嬭瘯锛圵hite-box锛?
-浠ｇ爜绾у崟鍏冩祴璇曚笌 Spring Boot 闆嗘垚娴嬭瘯锛岃鐩栧畨鍏ㄣ€丱IDC銆丼CIM銆丼AML銆丄dmin 绛夋牳蹇冩ā鍧椼€?
-| 绫诲埆 | 鐘舵€?| 鐢ㄤ緥鏁?| 澶辫触 | 閿欒 |
+## 1. 白盒测试（White-box）
+
+代码级单元测试与 Spring Boot 集成测试，覆盖安全、OIDC、SCIM、SAML、Admin 等核心模块。
+
+| 类别 | 状态 | 用例数 | 失败 | 错误 |
 |------|------|--------|------|------|
-| 鍗曞厓娴嬭瘯 (mvn test) | PASS | 2 | 0 | 0 |
-| 闆嗘垚娴嬭瘯 (mvn test -Pmysql-it) | PASS | 4 | 0 | 0 |
+| 单元测试 (mvn test) | PASS | 3 | 0 | 0 |
+| 集成测试 (mvn test -Pmysql-it) | PASS | 5 | 0 | 0 |
 
-闆嗘垚娴嬭瘯鍚細AdminSessionChainIT銆丱idcPublicApiIT銆丼cimApiIT銆丼cimBulkPatchIT銆丄dminAuthIT銆丄dminIdentityProviderIT銆乄ebAuthnPublicApiIT銆?
-## 2. 榛戠洅娴嬭瘯锛圔lack-box锛?
-瀵硅繍琛屼腑鏈嶅姟杩涜澶栭儴 API 鍐掔儫锛屼笉渚濊禆鍐呴儴瀹炵幇銆?
-| 椤圭洰 | 鐘舵€?| 閫氳繃椤?| 澶辫触椤?|
+集成测试含：AdminSessionChainIT、OidcPublicApiIT、ScimApiIT、ScimBulkPatchIT、AdminAuthIT、AdminIdentityProviderIT、WebAuthnPublicApiIT。
+
+## 2. 黑盒测试（Black-box）
+
+对运行中服务进行外部 API 冒烟，不依赖内部实现。
+
+| 项目 | 状态 | 通过项 | 失败项 |
 |------|------|--------|--------|
-| E2E 鍐掔儫 (e2e-local.ps1) | PASS | 10 | 0 |
+| E2E 冒烟 (e2e-local.ps1) | PASS | 10 | 0 |
 
-瑕嗙洊锛氬仴搴锋鏌ャ€丱IDC Discovery銆丣WKS銆丼CIM 閰嶇疆銆丄dmin 鐧诲綍+浼氳瘽銆丼CIM Token銆佺櫥鍑?URL銆佺櫥褰曢〉銆乄ebAuthn 鐧诲綍閫夐」銆?
-## 3. 閾捐矾娴嬭瘯锛圕hain / E2E Flow锛?
-| 閾捐矾 | 鐘舵€?| 姝ラ鏁?|
+覆盖：健康检查、OIDC Discovery、JWKS、SCIM 配置、Admin 登录+会话、SCIM Token、登出 URL、登录页、WebAuthn 登录选项。
+
+## 3. 链路测试（Chain / E2E Flow）
+
+| 链路 | 状态 | 步骤数 |
 |------|------|--------|
-| 鍏ㄩ摼璺?(chain-local.ps1) | PASS | 22 |
+| 全链路 (chain-local.ps1) | PASS | 22 |
 
-| 閾捐矾鍚嶇О | 楠岃瘉姝ラ |
+| 链路名称 | 验证步骤 |
 |----------|----------|
-| OIDC-Public | Discovery 鈫?JWKS 鈫?Client Credentials Token |
-| Admin-Session | Login 鈫?/me 鈫?Clients 鈫?Users 鈫?Dashboard 鈫?Logout 鈫?401 |
-| SCIM-Lifecycle | Token 鈫?Config 鈫?Create User 鈫?PATCH 鍋滅敤 鈫?楠岃瘉 鈫?Delete |
-| Security | 閿欒瀵嗙爜鎷掔粷銆佹棤 Token SCIM 401 |
-| OIDC-Authorize | PKCE 鎺堟潈璇锋眰閲嶅畾鍚戣嚦鐧诲綍 |
-| WebAuthn-SLO | WebAuthn 鐧诲綍閫夐」銆丷P logout URI 閰嶇疆銆丏iscovery backchannel 澹版槑 |
+| OIDC-Public | Discovery → JWKS → Client Credentials Token |
+| Admin-Session | Login → /me → Clients → Users → Dashboard → Logout → 401 |
+| SCIM-Lifecycle | Token → Config → Create User → PATCH 停用 → 验证 → Delete |
+| Security | 错误密码拒绝、无 Token SCIM 401 |
+| OIDC-Authorize | PKCE 授权请求重定向至登录 |
+| WebAuthn-SLO | WebAuthn 登录选项、RP logout URI 配置、Discovery backchannel 声明 |
 
-## 4. 鍘嬪姏娴嬭瘯锛圫tress锛?
-| 鎸囨爣 | 闃堝€?| 瀹炴祴 | 鐘舵€?|
+## 4. 压力测试（Stress）
+
+| 指标 | 阈值 | 实测 | 状态 |
 |------|------|------|------|
-| 閿欒鐜?| 0% | 0 errors | PASS |
-| Health P99 | < 500ms | 230.81 ms | PASS |
-| 骞跺彂 | 20 | 500 req/endpoint | 鈥?|
+| 错误率 | 0% | 0 errors | PASS |
+| Health P99 | < 500ms | 255.37 ms | PASS |
+| 并发 | 20 | 500 req/endpoint | — |
 
-璇︾粏鍘嬫祴鏁版嵁瑙?[benchmark-report.md](benchmark-report.md)銆?
-## 5. 鐢熶骇鍑嗗叆妫€鏌ユ竻鍗?
-| 妫€鏌ラ」 | 鐘舵€?| 璇存槑 |
+详细压测数据见 [benchmark-report.md](benchmark-report.md)。
+
+## 5. 生产准入检查清单
+
+| 检查项 | 状态 | 说明 |
 |--------|------|------|
-| MySQL 鎸佷箙鍖栵紙绂佺敤 H2锛?| PASS | MysqlOnlyDataSourceGuard 寮哄埗 MySQL |
+| MySQL 持久化（禁用 H2） | PASS | MysqlOnlyDataSourceGuard 强制 MySQL |
 | Redis Session | PASS | Spring Session Redis |
-| OAuth2/OIDC 鏍囧噯绔偣 | PASS | SAS 瀹樻柟瀹炵幇 |
-| Admin 浼氳瘽璁よ瘉 | PASS | 鐧诲綍鍚?Session 鎸佷箙鍖?|
-| SCIM 2.0 PATCH/Bulk | PASS | 閾捐矾娴嬭瘯楠岃瘉 |
-| SAML 鍏冩暟鎹鍏?| PASS | 闆嗘垚娴嬭瘯楠岃瘉 |
-| 鐧诲綍闄愭祦 | PASS | 20娆?鍒嗛挓/IP |
+| OAuth2/OIDC 标准端点 | PASS | SAS 官方实现 |
+| Admin 会话认证 | PASS | 登录后 Session 持久化 |
+| SCIM 2.0 PATCH/Bulk | PASS | 链路测试验证 |
+| SAML 元数据导入 | PASS | 集成测试验证 |
+| 登录限流 | PASS | 20次/分钟/IP |
 | JWT RS256 | PASS | 2048-bit RSA |
-| Flyway 杩佺Щ V1-V8 | PASS | 鑷姩鎵ц |
-| HTTPS / 鎸佷箙鍖栧瘑閽?| 寰呯敓浜ч厤缃?| 閮ㄧ讲鏃堕厤缃?application-prod.yml |
+| Flyway 迁移 V1-V8 | PASS | 自动执行 |
+| HTTPS / 持久化密钥 | 待生产配置 | 部署时配置 application-prod.yml |
 
-## 6. 鎵ц鍛戒护
+## 6. 执行命令
 
     $env:MYSQL_PASSWORD = '123456'
     powershell -File scripts/acceptance.ps1
 
-## 7. 缁撹
+## 7. 结论
 
 PASS: ZestSSO v1.0.0-SNAPSHOT production acceptance completed.

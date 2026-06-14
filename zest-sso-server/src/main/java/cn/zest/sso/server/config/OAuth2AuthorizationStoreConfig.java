@@ -1,6 +1,7 @@
 package cn.zest.sso.server.config;
 
 import cn.zest.sso.server.security.SsoUserDetails;
+import cn.zest.sso.server.security.jackson.LongMixin;
 import cn.zest.sso.server.security.jackson.SsoUserDetailsMixin;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,7 @@ public class OAuth2AuthorizationStoreConfig {
 
         private SsoOAuth2AuthorizationRowMapper(RegisteredClientRepository registeredClientRepository) {
             super(registeredClientRepository);
+            getObjectMapper().addMixIn(Long.class, LongMixin.class);
             getObjectMapper().addMixIn(SsoUserDetails.class, SsoUserDetailsMixin.class);
         }
     }

@@ -62,9 +62,17 @@ public class LogoutService {
         if (!StringUtils.hasText(principal)) {
             return;
         }
+        revokeOAuthAccess(principal);
+        sessionAdminService.revokeAllByUsername(principal);
+    }
+
+    /** 吊销 OAuth 授权与 Back-Channel，不删除 HTTP/Redis 会话（由 finishHttpLogout 处理当前会话）。 */
+    public void revokeOAuthAccess(String principal) {
+        if (!StringUtils.hasText(principal)) {
+            return;
+        }
         backchannelLogoutService.triggerBackchannelLogout(principal);
         authorizationAdminService.revokeAllByPrincipalName(principal);
-        sessionAdminService.revokeAllByUsername(principal);
         auditSupport.log(AuditEventType.LOGOUT, principal, "全局登出：吊销全部 OAuth 授权与会话");
         webhookEventPublisher.publish(AuditEventType.LOGOUT, principal, principal, "全局登出");
         ssoMetrics.recordLogout();

@@ -82,7 +82,7 @@ public class AdminAuthController {
     public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         SsoUserDetails user = auditSupport.currentUser();
         if (user != null) {
-            logoutService.revokePrincipalAccess(user.getUsername());
+            logoutService.revokeOAuthAccess(user.getUsername());
         }
         logoutService.finishHttpLogout(request, response);
         return ApiResponse.success();

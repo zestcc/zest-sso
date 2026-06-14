@@ -244,7 +244,8 @@ $conclusion
 $reportPath = Join-Path $Root $ReportFile
 $parent = Split-Path -Parent $reportPath
 if ($parent -and -not (Test-Path $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
-Set-Content -Path $reportPath -Value $report -Encoding UTF8
+$utf8Bom = New-Object System.Text.UTF8Encoding $true
+[System.IO.File]::WriteAllText($reportPath, $report, $utf8Bom)
 
 Write-Host ""
 Write-Host "========================================"
