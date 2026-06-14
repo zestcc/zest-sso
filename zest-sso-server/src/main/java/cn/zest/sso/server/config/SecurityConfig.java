@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,6 +27,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -53,19 +55,22 @@ public class SecurityConfig {
     private final FederatedLoginSuccessHandler federatedLoginSuccessHandler;
     private final FormLoginMfaSuccessHandler formLoginMfaSuccessHandler;
     private final FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient;
+    private final Environment environment;
 
     public SecurityConfig(SsoProperties ssoProperties,
                           LoginRateLimitFilter loginRateLimitFilter,
                           AdminSecurityHandlers adminSecurityHandlers,
                           FederatedLoginSuccessHandler federatedLoginSuccessHandler,
                           @Lazy FormLoginMfaSuccessHandler formLoginMfaSuccessHandler,
-                          FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient) {
+                          FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient,
+                          Environment environment) {
         this.ssoProperties = ssoProperties;
         this.loginRateLimitFilter = loginRateLimitFilter;
         this.adminSecurityHandlers = adminSecurityHandlers;
         this.federatedLoginSuccessHandler = federatedLoginSuccessHandler;
         this.formLoginMfaSuccessHandler = formLoginMfaSuccessHandler;
         this.federatedAccessTokenResponseClient = federatedAccessTokenResponseClient;
+        this.environment = environment;
     }
 
     @Bean
@@ -131,7 +136,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(ssoProperties.getSecurity().getCorsAllowedOrigins());
+        if (isDevProfile()) {
+            // 本地 Admin Vite 端口被占用时会自动换端口（如 5180），dev 放行 localhost / 127.0.0.1
+            config.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
+        } else {
+            config.setAllowedOrigins(ssoProperties.getSecurity().getCorsAllowedOrigins());
+        }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -140,5 +150,9 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private boolean isDevProfile() {
+        return !Arrays.stream(environment.getActiveProfiles()).anyMatch("prod"::equals);
     }
 }
