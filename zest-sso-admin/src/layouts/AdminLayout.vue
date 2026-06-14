@@ -55,8 +55,13 @@ const menuItems = computed(() => {
 })
 
 async function handleLogout() {
-  await auth.logout()
-  router.push('/login')
+  try {
+    await auth.logout()
+  } catch {
+    // 即使 API 失败也清本地状态并跳转登录页
+    auth.user = null
+  }
+  await router.replace('/login')
 }
 </script>
 

@@ -54,10 +54,34 @@ class AdminAuthIT {
                 .andExpect(status().isOk())
                 .andReturn();
 
+        var session = (org.springframework.mock.web.MockHttpSession) loginResult.getRequest().getSession();
+
         mockMvc.perform(post("/api/admin/auth/logout")
-                        .session((org.springframework.mock.web.MockHttpSession) loginResult.getRequest().getSession()))
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));
+
+        mockMvc.perform(get("/api/admin/auth/me").session(session))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldLogoutBuiltInWebSessionViaGet() throws Exception {
+        var loginResult = mockMvc.perform(post("/api/admin/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"admin\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var session = (org.springframework.mock.web.MockHttpSession) loginResult.getRequest().getSession();
+
+        mockMvc.perform(get("/logout").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .redirectedUrl("/login?logout"));
+
+        mockMvc.perform(get("/api/admin/auth/me").session(session))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

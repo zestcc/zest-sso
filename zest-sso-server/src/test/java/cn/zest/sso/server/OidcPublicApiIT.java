@@ -66,4 +66,12 @@ class OidcPublicApiIT {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data").value(containsString("connect/logout")));
     }
+
+    @Test
+    void shouldOidcLogoutWithoutRequiringAuthorizationServerAuth() throws Exception {
+        mockMvc.perform(get("/connect/logout"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .redirectedUrl("/login?logout"));
+    }
 }

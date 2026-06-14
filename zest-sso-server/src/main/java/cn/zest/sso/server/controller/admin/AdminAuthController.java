@@ -79,17 +79,12 @@ public class AdminAuthController {
     }
 
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(HttpServletRequest request) {
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         SsoUserDetails user = auditSupport.currentUser();
         if (user != null) {
-            logoutService.logoutByPrincipal(user.getUsername());
-        } else {
-            logoutService.logoutCurrentUser(null);
+            logoutService.revokePrincipalAccess(user.getUsername());
         }
-        var session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
+        logoutService.finishHttpLogout(request, response);
         return ApiResponse.success();
     }
 

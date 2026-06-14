@@ -4,9 +4,11 @@ import cn.zest.sso.server.handler.AdminSecurityHandlers;
 import cn.zest.sso.server.security.FormLoginMfaSuccessHandler;
 import cn.zest.sso.server.security.FederatedLoginSuccessHandler;
 import cn.zest.sso.server.security.LoginRateLimitFilter;
+import cn.zest.sso.server.security.SsoLogoutHandler;
 import cn.zest.sso.server.federation.oauth.FederatedDelegatingAccessTokenResponseClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
@@ -45,7 +47,6 @@ public class SecurityConfig {
             new AntPathRequestMatcher("/oauth2/jwks"),
             new AntPathRequestMatcher("/oauth2/consent"),
             new AntPathRequestMatcher("/userinfo"),
-            new AntPathRequestMatcher("/connect/logout"),
             new AntPathRequestMatcher("/.well-known/openid-configuration")
     );
 
@@ -56,6 +57,7 @@ public class SecurityConfig {
     private final FormLoginMfaSuccessHandler formLoginMfaSuccessHandler;
     private final FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient;
     private final Environment environment;
+    private final SsoLogoutHandler ssoLogoutHandler;
 
     public SecurityConfig(SsoProperties ssoProperties,
                           LoginRateLimitFilter loginRateLimitFilter,
@@ -63,7 +65,8 @@ public class SecurityConfig {
                           FederatedLoginSuccessHandler federatedLoginSuccessHandler,
                           @Lazy FormLoginMfaSuccessHandler formLoginMfaSuccessHandler,
                           FederatedDelegatingAccessTokenResponseClient federatedAccessTokenResponseClient,
-                          Environment environment) {
+                          Environment environment,
+                          @Lazy SsoLogoutHandler ssoLogoutHandler) {
         this.ssoProperties = ssoProperties;
         this.loginRateLimitFilter = loginRateLimitFilter;
         this.adminSecurityHandlers = adminSecurityHandlers;
@@ -71,6 +74,7 @@ public class SecurityConfig {
         this.formLoginMfaSuccessHandler = formLoginMfaSuccessHandler;
         this.federatedAccessTokenResponseClient = federatedAccessTokenResponseClient;
         this.environment = environment;
+        this.ssoLogoutHandler = ssoLogoutHandler;
     }
 
     @Bean
@@ -117,10 +121,13 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
+                        .logoutRequestMatcher(new OrRequestMatcher(
+                                new AntPathRequestMatcher("/logout", "GET"),
+                                new AntPathRequestMatcher("/logout", "POST")))
+                        .addLogoutHandler(ssoLogoutHandler)
                         .logoutSuccessUrl("/login?logout")
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        .deleteCookies("SESSION", "JSESSIONID")
                         .permitAll()
                 )
                 .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);

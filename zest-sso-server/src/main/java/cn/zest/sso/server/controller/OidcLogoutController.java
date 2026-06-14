@@ -6,7 +6,6 @@ import cn.zest.sso.server.service.BackchannelLogoutService;
 import cn.zest.sso.server.service.LogoutService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -44,11 +43,10 @@ public class OidcLogoutController {
                 ? backchannelLogoutService.resolveFrontchannelLogoutUris(principal)
                 : List.of();
 
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
+        if (StringUtils.hasText(principal)) {
+            logoutService.revokePrincipalAccess(principal);
         }
-        logoutService.logoutByPrincipal(principal);
+        logoutService.finishHttpLogout(request, response);
 
         String finalRedirect = StringUtils.hasText(redirectUri) && isAllowedRedirect(redirectUri)
                 ? redirectUri

@@ -27,7 +27,12 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +53,18 @@ public class AuthorizationServerConfig {
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
+                http.getConfigurer(OAuth2AuthorizationServerConfigurer.class);
+        // RP-Initiated Logout 由 OidcLogoutController 处理，避免 SAS 强制 id_token_hint 返回 400
+        RequestMatcher endpointsMatcher = new AndRequestMatcher(
+                authorizationServerConfigurer.getEndpointsMatcher(),
+                new NegatedRequestMatcher(new OrRequestMatcher(
+                        new AntPathRequestMatcher("/connect/logout"),
+                        new AntPathRequestMatcher("/logout/oidc")
+                ))
+        );
+        http.securityMatcher(endpointsMatcher);
 
         http.csrf(csrf -> csrf.ignoringRequestMatchers(
                 "/oauth2/token",
