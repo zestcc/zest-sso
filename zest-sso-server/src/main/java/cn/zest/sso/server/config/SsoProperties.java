@@ -107,6 +107,13 @@ public class SsoProperties {
     private Governance governance = new Governance();
     private Branding branding = new Branding();
     private JwtRotation jwtRotation = new JwtRotation();
+    private Test test = new Test();
+
+    @Data
+    public static class Test {
+        /** 启用内置 Back-Channel 测试 RP（仅 dev/test 联调） */
+        private boolean backchannelReceiverEnabled = false;
+    }
 
     @Data
     public static class WebAuthn {

@@ -31,7 +31,7 @@
 - [x] **MfaChannelAdapter** SPI（阿里云/腾讯云短信，可选）
 - [x] **AlertChannelAdapter** SPI（HTTP/钉钉/企微机器人，可选）
 - [x] Helm **HPA / PDB**（values 可选启用）
-- [ ] Admin 告警通道在线配置（当前 YAML）
+- [x] Admin 告警通道在线配置（Admin API + `AdminPluggableModulesIT`）
 - [ ] 短信 SDK 真实发送（当前日志模拟，凭据就绪后可接 SDK）
 
 ### 阶段 C — 合规闭环（需外部机构）

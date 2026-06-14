@@ -21,6 +21,8 @@ spring:
 zest:
   sso:
     issuer: http://localhost:9000
+    test:
+      backchannel-receiver-enabled: true
     security:
       corsAllowedOrigins:
         - http://localhost:5173

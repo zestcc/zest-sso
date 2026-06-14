@@ -15,6 +15,8 @@ spring:
 zest:
   sso:
     issuer: http://localhost:9000
+    test:
+      backchannel-receiver-enabled: true
     risk:
       step-up-on-new-ip: false
     security:

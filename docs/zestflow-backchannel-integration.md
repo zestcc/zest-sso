@@ -8,7 +8,7 @@
 <dependency>
     <groupId>cn.zest.sso</groupId>
     <artifactId>zest-sso-client-sdk</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
