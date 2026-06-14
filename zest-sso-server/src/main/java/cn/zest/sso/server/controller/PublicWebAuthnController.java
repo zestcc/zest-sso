@@ -37,7 +37,9 @@ public class PublicWebAuthnController {
     public ApiResponse<WebauthnOptionsVO> loginOptions(@RequestBody(required = false) WebauthnLoginOptionsRequest request,
                                                        HttpServletRequest httpRequest) {
         String username = request != null ? request.getUsername() : null;
-        return ApiResponse.success(webAuthnService.beginAuthentication(username, httpRequest.getHeader("Origin")));
+        String origin = webAuthnService.resolveWebOrigin(
+                httpRequest.getHeader("Origin"), httpRequest.getHeader("Referer"));
+        return ApiResponse.success(webAuthnService.beginAuthentication(username, origin));
     }
 
     @PostMapping("/login/finish")
@@ -45,7 +47,8 @@ public class PublicWebAuthnController {
                                                         HttpServletRequest httpRequest,
                                                         HttpServletResponse httpResponse) {
         Long userId = webAuthnService.finishAuthentication(
-                request.getSessionToken(), request.getCredential(), httpRequest.getHeader("Origin"));
+                request.getSessionToken(), request.getCredential(),
+                webAuthnService.resolveWebOrigin(httpRequest.getHeader("Origin"), httpRequest.getHeader("Referer")));
         SsoUserDetails details = userDetailsService.loadByUserId(userId);
         var authentication = new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
         webLoginService.establishWebAuthnSession(authentication, httpRequest, httpResponse);

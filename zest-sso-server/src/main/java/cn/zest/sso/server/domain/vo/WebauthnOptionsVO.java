@@ -10,4 +10,6 @@ import java.util.Map;
 public class WebauthnOptionsVO {
     private String sessionToken;
     private Map<String, Object> publicKey;
+    /** 指定用户名时返回：该用户是否已注册 Passkey */
+    private Boolean credentialAvailable;
 }

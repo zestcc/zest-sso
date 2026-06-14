@@ -32,8 +32,10 @@ public class AdminWebAuthnController {
             @RequestBody(required = false) WebauthnRegisterOptionsRequest request,
             HttpServletRequest httpRequest) {
         String nickname = request != null && request.getNickname() != null ? request.getNickname() : "Passkey";
+        String origin = webAuthnService.resolveWebOrigin(
+                httpRequest.getHeader("Origin"), httpRequest.getHeader("Referer"));
         return ApiResponse.success(webAuthnService.beginRegistration(
-                user.getUserId(), nickname, httpRequest.getHeader("Origin")));
+                user.getUserId(), nickname, origin));
     }
 
     @PostMapping("/register/finish")
@@ -46,7 +48,7 @@ public class AdminWebAuthnController {
                 request.getSessionToken(),
                 request.getNickname() != null ? request.getNickname() : "Passkey",
                 request.getCredential(),
-                httpRequest.getHeader("Origin"));
+                webAuthnService.resolveWebOrigin(httpRequest.getHeader("Origin"), httpRequest.getHeader("Referer")));
         return ApiResponse.success();
     }
 

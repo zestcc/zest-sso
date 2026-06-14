@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { authApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
-import { credentialToJson, isWebAuthnSupported, parseAuthenticationOptions } from '@/utils/webauthn'
+import { credentialToJson, formatWebAuthnError, isWebAuthnSupported, parseAuthenticationOptions } from '@/utils/webauthn'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -59,6 +59,10 @@ async function handlePasskeyLogin() {
   passkeyLoading.value = true
   try {
     const options = await authApi.webauthnLoginOptions(form.username || undefined)
+    if (options.credentialAvailable === false) {
+      message.warning('该账号尚未注册 Passkey，请先使用密码登录，在「个人中心」完成注册后再试')
+      return
+    }
     const credential = await navigator.credentials.get({
       publicKey: parseAuthenticationOptions(options.publicKey),
     })
@@ -69,7 +73,7 @@ async function handlePasskeyLogin() {
     const redirect = (route.query.redirect as string) || '/dashboard'
     router.push(redirect)
   } catch (e) {
-    message.error(e instanceof Error ? e.message : 'Passkey 登录失败')
+    message.error(formatWebAuthnError(e))
   } finally {
     passkeyLoading.value = false
   }
@@ -119,7 +123,7 @@ async function handlePasskeyLogin() {
       </a-form>
 
       <div class="login-hint">
-        默认账号 admin / admin123，运维账号 operator / operator123
+        默认账号 admin / admin123。Passkey 需先密码登录后在「个人中心」注册。
       </div>
     </div>
   </div>

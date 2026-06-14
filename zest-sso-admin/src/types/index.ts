@@ -54,6 +54,7 @@ export interface WebauthnCredentialInfo {
 export interface WebauthnOptions {
   sessionToken: string
   publicKey: Record<string, unknown>
+  credentialAvailable?: boolean | null
 }
 
 export interface SessionInfo {

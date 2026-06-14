@@ -14,8 +14,6 @@ import cn.zest.sso.server.domain.vo.WebauthnCredentialVO;
 import cn.zest.sso.server.domain.vo.WebauthnOptionsVO;
 import cn.zest.sso.server.support.AdminAuditSupport;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webauthn4j.WebAuthnManager;
 import com.webauthn4j.converter.util.ObjectConverter;
 import com.webauthn4j.credential.CredentialRecord;
@@ -34,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -53,7 +52,6 @@ public class WebAuthnService {
     private final StringRedisTemplate redisTemplate;
     private final WebAuthnManager webAuthnManager;
     private final ObjectConverter objectConverter;
-    private final ObjectMapper objectMapper;
     private final AdminAuditSupport auditSupport;
 
     public boolean isEnabled() {
@@ -161,11 +159,15 @@ public class WebAuthnService {
         String sessionToken = storeChallenge("auth", challengeBytes);
 
         List<PublicKeyCredentialDescriptor> allowCredentials = new ArrayList<>();
+        Boolean credentialAvailable = null;
         if (StringUtils.hasText(username)) {
             SsoUser user = userMapper.selectOne(new LambdaQueryWrapper<SsoUser>()
                     .eq(SsoUser::getUsername, username.trim()));
             if (user != null) {
                 allowCredentials.addAll(buildAllowCredentials(user.getId()));
+                credentialAvailable = !allowCredentials.isEmpty();
+            } else {
+                credentialAvailable = false;
             }
         }
 
@@ -181,6 +183,7 @@ public class WebAuthnService {
         return WebauthnOptionsVO.builder()
                 .sessionToken(sessionToken)
                 .publicKey(toPublicKeyMap(options))
+                .credentialAvailable(credentialAvailable)
                 .build();
     }
 
@@ -340,8 +343,76 @@ public class WebAuthnService {
         return (Map<String, Object>) map;
     }
 
-    private Map<String, Object> toPublicKeyMap(Object options) {
-        return objectMapper.convertValue(options, new TypeReference<>() {});
+    private Map<String, Object> toPublicKeyMap(PublicKeyCredentialRequestOptions options) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("challenge", Base64UrlUtil.encodeToString(options.getChallenge().getValue()));
+        map.put("timeout", options.getTimeout());
+        map.put("rpId", options.getRpId());
+        if (options.getAllowCredentials() != null && !options.getAllowCredentials().isEmpty()) {
+            map.put("allowCredentials", options.getAllowCredentials().stream()
+                    .map(this::descriptorToMap)
+                    .toList());
+        }
+        if (options.getUserVerification() != null) {
+            map.put("userVerification", options.getUserVerification().getValue());
+        }
+        return map;
+    }
+
+    private Map<String, Object> toPublicKeyMap(PublicKeyCredentialCreationOptions options) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("rp", Map.of(
+                "name", options.getRp().getName(),
+                "id", options.getRp().getId() != null ? options.getRp().getId() : ssoProperties.getWebauthn().getRpId()
+        ));
+        map.put("user", Map.of(
+                "id", Base64UrlUtil.encodeToString(options.getUser().getId()),
+                "name", options.getUser().getName(),
+                "displayName", options.getUser().getDisplayName()
+        ));
+        map.put("challenge", Base64UrlUtil.encodeToString(options.getChallenge().getValue()));
+        map.put("pubKeyCredParams", options.getPubKeyCredParams().stream()
+                .map(p -> Map.of(
+                        "type", p.getType().getValue(),
+                        "alg", p.getAlg().getValue()
+                ))
+                .toList());
+        if (options.getTimeout() != null) {
+            map.put("timeout", options.getTimeout());
+        }
+        if (options.getExcludeCredentials() != null && !options.getExcludeCredentials().isEmpty()) {
+            map.put("excludeCredentials", options.getExcludeCredentials().stream()
+                    .map(this::descriptorToMap)
+                    .toList());
+        }
+        if (options.getAuthenticatorSelection() != null) {
+            Map<String, Object> selection = new LinkedHashMap<>();
+            if (options.getAuthenticatorSelection().getResidentKey() != null) {
+                selection.put("residentKey", options.getAuthenticatorSelection().getResidentKey().getValue());
+            }
+            if (options.getAuthenticatorSelection().getUserVerification() != null) {
+                selection.put("userVerification", options.getAuthenticatorSelection().getUserVerification().getValue());
+            }
+            if (!selection.isEmpty()) {
+                map.put("authenticatorSelection", selection);
+            }
+        }
+        if (options.getAttestation() != null) {
+            map.put("attestation", options.getAttestation().getValue());
+        }
+        return map;
+    }
+
+    private Map<String, Object> descriptorToMap(PublicKeyCredentialDescriptor descriptor) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("type", descriptor.getType().getValue());
+        item.put("id", Base64UrlUtil.encodeToString(descriptor.getId()));
+        if (descriptor.getTransports() != null && !descriptor.getTransports().isEmpty()) {
+            item.put("transports", descriptor.getTransports().stream()
+                    .map(AuthenticatorTransport::getValue)
+                    .toList());
+        }
+        return item;
     }
 
     private SsoUser requireActiveUser(Long userId) {
@@ -353,6 +424,30 @@ public class WebAuthnService {
             throw new SsoException(ErrorCode.FORBIDDEN, "用户已禁用");
         }
         return user;
+    }
+
+    public String resolveWebOrigin(String originHeader, String refererHeader) {
+        if (StringUtils.hasText(originHeader)) {
+            return originHeader;
+        }
+        if (!StringUtils.hasText(refererHeader)) {
+            return null;
+        }
+        try {
+            URI uri = URI.create(refererHeader);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if (scheme == null || host == null) {
+                return null;
+            }
+            int port = uri.getPort();
+            if (port > 0) {
+                return scheme + "://" + host + ":" + port;
+            }
+            return scheme + "://" + host;
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private void assertEnabled() {

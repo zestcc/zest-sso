@@ -34,7 +34,21 @@ class WebAuthnPublicApiIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.sessionToken").isNotEmpty())
-                .andExpect(jsonPath("$.data.publicKey.challenge").isNotEmpty());
+                .andExpect(jsonPath("$.data.publicKey.challenge").isString())
+                .andExpect(jsonPath("$.data.publicKey.challenge").isNotEmpty())
+                .andExpect(jsonPath("$.data.publicKey.allowCredentials").doesNotExist())
+                .andExpect(jsonPath("$.data.credentialAvailable").doesNotExist());
+    }
+
+    @Test
+    void loginOptions_withUsernameWithoutPasskey_shouldIndicateUnavailable() throws Exception {
+        mockMvc.perform(post("/api/public/webauthn/login/options")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Origin", "http://localhost:5173")
+                        .content("{\"username\":\"admin\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.credentialAvailable").value(false));
     }
 
     @Test

@@ -5,7 +5,7 @@ import { message } from 'ant-design-vue'
 import { authApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import type { MfaSetupInfo, WebauthnCredentialInfo } from '@/types'
-import { credentialToJson, isWebAuthnSupported, parseRegistrationOptions } from '@/utils/webauthn'
+import { credentialToJson, formatWebAuthnError, isWebAuthnSupported, parseRegistrationOptions } from '@/utils/webauthn'
 
 const auth = useAuthStore()
 const loading = ref(false)
@@ -47,7 +47,7 @@ async function registerPasskey() {
     message.success('Passkey 已注册')
     await loadPasskeys()
   } catch (e) {
-    message.error(e instanceof Error ? e.message : '注册失败')
+    message.error(formatWebAuthnError(e))
   } finally {
     passkeyLoading.value = false
   }
