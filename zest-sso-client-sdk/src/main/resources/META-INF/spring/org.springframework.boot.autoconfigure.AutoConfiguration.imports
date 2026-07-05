@@ -1,1 +1,2 @@
 cn.zest.sso.client.ZestSsoClientAutoConfiguration
+cn.zest.sso.client.rp.RpSsoAutoConfiguration

@@ -1,5 +1,7 @@
 package cn.zest.sso.client;
 
+import cn.zest.sso.client.rp.RpSsoProperties;
+import cn.zest.sso.client.rp.provider.ZestSsoRpProvider;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -10,7 +12,7 @@ import java.util.List;
  */
 @Data
 @ConfigurationProperties(prefix = "zest.sso.client")
-public class ZestSsoClientProperties {
+public class ZestSsoClientProperties implements RpSsoProperties {
 
     /**
      * 是否启用 SSO 集成。
@@ -71,4 +73,9 @@ public class ZestSsoClientProperties {
     private boolean backchannelLogoutEnabled = true;
 
     private boolean frontchannelLogoutEnabled = true;
+
+    @Override
+    public String getProvider() {
+        return ZestSsoRpProvider.PROVIDER_ID;
+    }
 }
